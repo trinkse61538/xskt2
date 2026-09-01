@@ -1,0 +1,11 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#111827"><title>XSKT2 — Thiên thời & Cá nhân</title><link rel="manifest" href="/manifest.webmanifest"><link rel="stylesheet" href="/assets/style.css"></head>
+<body><header class="top"><div><b>XSKT2</b><span>Universal V1.0 · Personal V1.0</span></div><label><input id="datePick" type="date"></label></header>
+<main>
+<section class="mode"><button class="active" data-mode="universal">🌤 Thiên thời</button><button data-mode="personal">👤 Cá nhân</button></section>
+<section id="loading" class="card">Đang tải dữ liệu…</section>
+<section id="today" class="hidden"></section>
+<section id="profile" class="card hidden"><h2>Hồ sơ Bát Tự</h2><div class="grid"><label>Ngày sinh<input id="birthDate" type="date"></label><label>Giờ sinh<input id="birthTime" type="time" value="12:00"></label></div><button id="saveProfile" class="primary">Lưu & tính Personal</button><p class="muted">Personal V1 chỉ rerank Universal Top 20 với trọng số 80% Universal + 20% elemental overlay.</p></section>
+<section class="card"><h2>Chọn ngày tốt</h2><div class="grid"><label>Từ ngày<input id="bestStart" type="date"></label><label>Số ngày<select id="bestCount"><option>4</option><option>7</option><option>10</option><option>15</option><option>20</option><option>25</option></select></label></div><button id="bestBtn">Xếp hạng ngày</button><div id="bestOut"></div></section>
+<section class="card"><h2>Quy ước</h2><p>Score và Agreement là điểm ranking/coherence, <b>không phải xác suất trúng</b>. History, Recent Form, Station Match và Anomaly Watch không được sửa Chủ 1/Chủ 2 đã freeze.</p></section>
+</main><nav class="bottom"><button data-scroll="top">Hôm nay</button><button data-scroll="best">Ngày tốt</button><button data-scroll="guide">Hướng dẫn</button><button data-scroll="stats">Thống kê</button><button data-scroll="more">Thêm</button></nav>
+<script src="/assets/app.js" defer></script></body></html>
