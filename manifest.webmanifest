@@ -1,9 +1,11 @@
 {
   "name": "XSKT2 — Thiên thời & Cá nhân",
   "short_name": "XSKT2",
-  "start_url": "/",
+  "description": "Universal Core, Personal Overlay, ngày tốt và thống kê XSMN.",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#0b1020",
-  "theme_color": "#111827",
+  "background_color": "#070b14",
+  "theme_color": "#0b1020",
   "icons": []
 }

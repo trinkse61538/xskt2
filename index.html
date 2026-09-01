@@ -1,11 +1,195 @@
-<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#111827"><title>XSKT2 — Thiên thời & Cá nhân</title><link rel="manifest" href="/manifest.webmanifest"><link rel="stylesheet" href="/assets/style.css"></head>
-<body><header class="top"><div><b>XSKT2</b><span>Universal V1.0 · Personal V1.0</span></div><label><input id="datePick" type="date"></label></header>
-<main>
-<section class="mode"><button class="active" data-mode="universal">🌤 Thiên thời</button><button data-mode="personal">👤 Cá nhân</button></section>
-<section id="loading" class="card">Đang tải dữ liệu…</section>
-<section id="today" class="hidden"></section>
-<section id="profile" class="card hidden"><h2>Hồ sơ Bát Tự</h2><div class="grid"><label>Ngày sinh<input id="birthDate" type="date"></label><label>Giờ sinh<input id="birthTime" type="time" value="12:00"></label></div><button id="saveProfile" class="primary">Lưu & tính Personal</button><p class="muted">Personal V1 chỉ rerank Universal Top 20 với trọng số 80% Universal + 20% elemental overlay.</p></section>
-<section class="card"><h2>Chọn ngày tốt</h2><div class="grid"><label>Từ ngày<input id="bestStart" type="date"></label><label>Số ngày<select id="bestCount"><option>4</option><option>7</option><option>10</option><option>15</option><option>20</option><option>25</option></select></label></div><button id="bestBtn">Xếp hạng ngày</button><div id="bestOut"></div></section>
-<section class="card"><h2>Quy ước</h2><p>Score và Agreement là điểm ranking/coherence, <b>không phải xác suất trúng</b>. History, Recent Form, Station Match và Anomaly Watch không được sửa Chủ 1/Chủ 2 đã freeze.</p></section>
-</main><nav class="bottom"><button data-scroll="top">Hôm nay</button><button data-scroll="best">Ngày tốt</button><button data-scroll="guide">Hướng dẫn</button><button data-scroll="stats">Thống kê</button><button data-scroll="more">Thêm</button></nav>
-<script src="/assets/app.js" defer></script></body></html>
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b1020">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="XSKT2">
+  <meta name="description" content="XSKT2 Universal Core và Personal Overlay: Thiên thời, ngày tốt, thống kê và đối chiếu XSMN.">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./assets/style.css">
+  <title>XSKT2 — Thiên thời & Cá nhân</title>
+</head>
+<body>
+<div id="app">
+  <header class="app-header">
+    <div class="header-copy">
+      <div class="eyebrow">XSKT2 · UNIVERSAL V1.0 · PERSONAL V1.0</div>
+      <h1 id="screenTitle">Hôm nay</h1>
+    </div>
+    <div class="header-actions">
+      <button id="todayJump" class="icon-btn" aria-label="Về hôm nay" title="Về hôm nay">⌾</button>
+      <button id="installBtn" class="icon-btn" hidden aria-label="Cài ứng dụng" title="Cài ứng dụng">＋</button>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <section id="screen-today" class="screen active">
+      <div class="date-toolbar">
+        <button id="datePrev" class="round-btn" aria-label="Ngày trước">‹</button>
+        <label class="date-label"><span>Ngày xem</span><input id="datePick" type="date" min="2026-01-01" max="2050-12-31"></label>
+        <button id="dateNext" class="round-btn" aria-label="Ngày sau">›</button>
+      </div>
+      <div id="todayContent"><div class="skeleton-card">Đang tải dữ liệu…</div></div>
+    </section>
+
+    <section id="screen-best" class="screen">
+      <div class="period-toolbar">
+        <button id="bestPrevMonth" class="round-btn" aria-label="Tháng trước">‹</button>
+        <button id="bestPeriod" class="period-label" type="button"></button>
+        <button id="bestNextMonth" class="round-btn" aria-label="Tháng sau">›</button>
+      </div>
+      <div class="screen-intro">
+        <strong>Ngày tốt theo Universal Day Score</strong>
+        <span>Chấm tất cả ngày hợp lệ → lấy N ngày chất lượng cao nhất → sắp lại theo ngày. Không phải N ngày liên tiếp.</span>
+      </div>
+      <div class="control-card">
+        <div class="control-label"><span>Số ngày</span><b>4 / 7 / 10 / 15 / 20 / 25</b></div>
+        <div id="bestCount" class="segmented wrap">
+          <button data-count="4">4</button><button data-count="7" class="active">7</button><button data-count="10">10</button>
+          <button data-count="15">15</button><button data-count="20">20</button><button data-count="25">25</button>
+        </div>
+        <label class="field"><span>Mốc sớm nhất được phép chọn</span><input id="bestStart" type="date" min="2026-01-01" max="2050-12-31"></label>
+        <div class="helper">Nếu phần còn lại của tháng không đủ N ngày, XSKT2 tự mở rộng sang tháng sau.</div>
+      </div>
+      <div id="bestSummary"></div>
+      <div id="bestList" class="day-list"></div>
+    </section>
+
+    <section id="screen-guide" class="screen">
+      <div class="method-hero">
+        <div class="method-kicker">STOP-ON-WIN · MONEY PLAN</div>
+        <h2>Hướng dẫn theo chu kỳ</h2>
+        <p>Chọn số ngày tốt, nhập tiền ngày 1 và xem lộ trình theo bội 15.000đ/số. Money-management hoàn toàn tách khỏi scoring engine.</p>
+      </div>
+      <div class="period-toolbar"><button id="guidePrevMonth" class="round-btn">‹</button><button id="guidePeriod" class="period-label"></button><button id="guideNextMonth" class="round-btn">›</button></div>
+      <div class="control-card">
+        <div class="control-label"><span>Số ngày trong chu kỳ</span><b>Ngày tốt được chọn từ Universal</b></div>
+        <div id="guideDayCount" class="segmented wrap">
+          <button data-days="4" class="active">4</button><button data-days="7">7</button><button data-days="10">10</button>
+          <button data-days="15">15</button><button data-days="20">20</button><button data-days="25">25</button>
+        </div>
+        <label class="field"><span>Tiền ngày 1 · mỗi số</span><input id="guideStake" type="number" min="15000" step="15000" value="75000" inputmode="numeric"></label>
+        <div id="stakeWarning" class="helper"></div>
+      </div>
+      <div id="guideSummary"></div>
+      <div class="section-title">Ngày được chọn</div>
+      <div id="guideDates" class="guide-date-list"></div>
+      <div class="section-title">Kế hoạch stop-on-win</div>
+      <div id="guidePlan" class="guide-plan-list"></div>
+      <div id="guideFormula" class="method-note"></div>
+      <div class="method-note warning"><b>Lưu ý</b><span>Đây là công cụ mô phỏng vốn theo payout giả định, không làm tăng xác suất trúng và không được dùng để sửa Chủ 1/Chủ 2.</span></div>
+    </section>
+
+    <section id="screen-stats" class="screen">
+      <div class="method-hero stats-hero">
+        <div class="method-kicker">FORWARD PERFORMANCE · HISTORY-ONLY EVALUATION</div>
+        <h2>Universal vs Personal vs Random</h2>
+        <p>Đánh giá sau khi có kết quả. History chỉ dùng chấm WIN/MISS, nháy và research; không feedback vào prediction core.</p>
+      </div>
+      <div class="stats-toolbar">
+        <div id="statsWindow" class="segmented wrap compact">
+          <button data-window="7">7d</button><button data-window="30" class="active">30d</button><button data-window="90">90d</button>
+          <button data-window="365">365d</button><button data-window="month">Tháng</button><button data-window="all">Tất cả</button>
+        </div>
+        <div id="statsScope" class="segmented compact">
+          <button data-scope="station1" class="active">Đài 1</button><button data-scope="any">Any Station</button>
+        </div>
+      </div>
+      <div id="statsFreshness"></div>
+      <div id="statsKpis" class="stats-kpi-grid"></div>
+      <div id="statsBaseline"></div>
+      <div class="section-title">Kết quả từng ngày</div>
+      <div id="statsFilter" class="segmented compact">
+        <button data-filter="ALL" class="active">Tất cả</button><button data-filter="WIN">WIN</button><button data-filter="MISS">MISS</button>
+      </div>
+      <div id="statsDays" class="stats-days"></div>
+    </section>
+
+    <section id="screen-more" class="screen">
+      <div id="moreMenu" class="more-grid">
+        <button data-more="profile"><span>👤</span><b>Hồ sơ Personal</b><small>Bát Tự overlay</small></button>
+        <button data-more="calendar"><span>🗓</span><b>Lịch tháng</b><small>Score · Tier · Chủ 1/2</small></button>
+        <button data-more="compare"><span>📊</span><b>Đối chiếu đài</b><small>Recent Form · Station Match</small></button>
+        <button data-more="all"><span>🔎</span><b>Tất cả ngày</b><small>Tìm 2026–2050</small></button>
+        <button data-more="method"><span>🧭</span><b>Phương pháp</b><small>Universal / Personal</small></button>
+        <button data-more="about"><span>ℹ️</span><b>Phiên bản</b><small>Integrity · dữ liệu</small></button>
+      </div>
+
+      <section id="more-profile" class="subscreen">
+        <div class="subhead"><button class="back-more">‹</button><div><span>PERSONAL OVERLAY</span><h2>Hồ sơ cá nhân</h2></div></div>
+        <div class="card">
+          <label class="field"><span>Tên/label hồ sơ</span><input id="profileLabel" type="text" maxlength="40" placeholder="Profile của tôi"></label>
+          <div class="two-col">
+            <label class="field"><span>Ngày sinh</span><input id="birthDate" type="date"></label>
+            <label class="field"><span>Giờ sinh</span><input id="birthTime" type="time" value="12:00"></label>
+          </div>
+          <label class="field"><span>Nơi sinh · chỉ lưu làm metadata</span><input id="birthPlace" type="text" placeholder="Ví dụ: Long Xuyên, An Giang"></label>
+          <button id="saveProfile" class="primary wide-btn">Lưu hồ sơ & tính Personal</button>
+          <button id="clearProfile" class="ghost wide-btn">Xóa hồ sơ trên thiết bị</button>
+        </div>
+        <div id="profileAnalysis"></div>
+      </section>
+
+      <section id="more-calendar" class="subscreen">
+        <div class="subhead"><button class="back-more">‹</button><div><span>MONTH VIEW</span><h2>Lịch tháng</h2></div></div>
+        <div class="period-toolbar"><button id="calPrev" class="round-btn">‹</button><button id="calPeriod" class="period-label"></button><button id="calNext" class="round-btn">›</button></div>
+        <div class="calendar-legend"><span><i class="tier-dot s"></i>S</span><span><i class="tier-dot a"></i>A</span><span><i class="tier-dot b"></i>B</span><span><i class="tier-dot c"></i>C</span></div>
+        <div class="weekday-row"><span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span><span>CN</span></div>
+        <div id="calendarGrid" class="calendar-grid"></div>
+        <div class="helper">Bấm một ngày để chuyển về màn Hôm nay và xem chi tiết.</div>
+      </section>
+
+      <section id="more-compare" class="subscreen">
+        <div class="subhead"><button class="back-more">‹</button><div><span>RESEARCH LAYERS</span><h2>Đối chiếu theo đài</h2></div></div>
+        <div id="compareDate"></div>
+        <div id="stationMatchOverview"></div>
+        <div class="section-title">Chọn đài</div>
+        <div id="compareStations" class="station-tabs"></div>
+        <div class="section-title">Chủ 1 · Chủ 2</div>
+        <div id="comparePicks"></div>
+        <div class="recent-toolbar"><span>Cửa sổ tần suất</span><div id="compareWindow" class="segmented compact"><button data-window="10">10</button><button data-window="30" class="active">30</button><button data-window="100">100</button></div></div>
+        <div id="recentTop"></div>
+        <div class="section-title">Bảng 00–99</div>
+        <div id="numberGrid" class="history-number-grid"></div>
+        <div id="compareWarning" class="method-note warning"></div>
+      </section>
+
+      <section id="more-all" class="subscreen">
+        <div class="subhead"><button class="back-more">‹</button><div><span>UNIVERSAL CALENDAR</span><h2>Tất cả ngày</h2></div></div>
+        <div class="filter-card">
+          <div class="two-col"><select id="allYear" aria-label="Năm"></select><select id="allMonth" aria-label="Tháng"></select></div>
+          <div id="allTier" class="segmented wrap compact"><button data-tier="ALL" class="active">Tất cả</button><button data-tier="S">S</button><button data-tier="A">A</button><button data-tier="B">B</button><button data-tier="C">C</button></div>
+          <input id="allSearch" type="search" placeholder="Tìm số, Can Chi, Nạp âm, tiết khí…">
+        </div>
+        <div id="allSummary" class="summary-line"></div>
+        <div id="allDays" class="day-list compact-list"></div>
+      </section>
+
+      <section id="more-method" class="subscreen">
+        <div class="subhead"><button class="back-more">‹</button><div><span>SPECIFY → FREEZE → TEST</span><h2>Phương pháp XSKT2</h2></div></div>
+        <div id="methodContent"></div>
+      </section>
+
+      <section id="more-about" class="subscreen">
+        <div class="subhead"><button class="back-more">‹</button><div><span>APP STATUS</span><h2>Phiên bản & dữ liệu</h2></div></div>
+        <div id="aboutContent"></div>
+      </section>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Điều hướng chính">
+    <button data-screen="today" class="active"><span>⌂</span><b>Hôm nay</b></button>
+    <button data-screen="best"><span>✦</span><b>Ngày tốt</b></button>
+    <button data-screen="guide"><span>◎</span><b>Hướng dẫn</b></button>
+    <button data-screen="stats"><span>▥</span><b>Thống kê</b></button>
+    <button data-screen="more"><span>•••</span><b>Thêm</b></button>
+  </nav>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script type="module" src="./assets/app.js"></script>
+</body>
+</html>
