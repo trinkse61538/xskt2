@@ -1,4 +1,4 @@
-const CACHE='xskt2-v3.0.0',DATA=CACHE+'-data';
+const CACHE='xskt2-v3.0.1',DATA=CACHE+'-data';
 const CORE=['./','./index.html','./assets/style.css','./assets/audit-v2.css','./assets/audit-v3.css','./assets/app.js','./assets/data.js','./assets/personal.js','./assets/bazi-calendar-v2.js','./assets/history.js','./assets/research-v2.js','./assets/health-v2.js','./assets/guide.js','./assets/screens.js','./manifest.webmanifest','./offline.html','./icons/icon-192.png','./icons/icon-512.png'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE.map(u=>new Request(u,{cache:'reload'})))).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('xskt2-')&&k!==CACHE&&k!==DATA).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
