@@ -1,0 +1,15 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {buildBudgetPlan,reviewPlan,normalizeAmount} from '../assets/guide-v33.js';
+const m={status:'miss',result:{totalNhay:0}},w={status:'win',result:{totalNhay:2}},p={status:'pending',result:null};
+test('whole steps; no rounding up except minimum',()=>{assert.equal(normalizeAmount(76000),75000);assert.equal(normalizeAmount(14999),15000)});
+test('fixed 7 dates, cap not exceeded',()=>{let a=buildBudgetPlan(7,15000,100000);assert.equal(a.covered,3);assert.equal(a.maxOutlay,90000);assert.equal(a.rows[3].allowed,false)});
+test('zero budget allows no dates',()=>{assert.equal(buildBudgetPlan(7,15000,0).covered,0)});
+test('legacy multiples match v4.5 historical formula',()=>{let a=buildBudgetPlan(4,75000,10000000,'legacy');assert.deepEqual(a.rows.map(x=>x.multiple),[1,1,2,3]);assert.equal(a.maxOutlay,1050000)});
+test('legacy cap prevents all later rows',()=>{let a=buildBudgetPlan(7,75000,300000,'legacy');assert.equal(a.covered,2);assert.equal(a.rows.slice(2).every(x=>!x.allowed),true)});
+test('stop at first win, count all nhay, skip remaining',()=>{let a=reviewPlan([m,w,w],buildBudgetPlan(3,15000,90000));assert.equal(a.net,100000);assert.equal(a.nhay,2);assert.equal(a.stopIndex,1);assert.equal(a.rows[2].review,'skipped')});
+test('pending before later WIN cannot be scored',()=>{let a=reviewPlan([m,p,w],buildBudgetPlan(3,15000,90000));assert.equal(a.net,-30000);assert.equal(a.reason,'pending');assert.equal(a.settled,1)});
+test('missing or unavailable is not MISS',()=>{for(const status of ['missing','unavailable']){let a=reviewPlan([{status,result:null},w],buildBudgetPlan(2,15000,60000));assert.equal(a.settled,0);assert.equal(a.reason,status)}});
+test('WIN can be negative on fixed plan',()=>{let a=reviewPlan([m,m,m,{status:'win',result:{totalNhay:1}}],buildBudgetPlan(4,15000,120000));assert.equal(a.net,-40000);assert.equal(a.reason,'win')});
+test('short month produces no extra money rows',()=>{assert.equal(buildBudgetPlan(2,15000,1000000).rows.length,2)});
+test('all MISS, budget and stop reason',()=>{let a=reviewPlan([m,m,m],buildBudgetPlan(3,15000,60000));assert.equal(a.net,-60000);assert.equal(a.reason,'budget');assert.equal(a.settled,2)});

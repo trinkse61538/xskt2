@@ -10,7 +10,7 @@ const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const initial=todayISO(),d=parseISO(initial);
 const state={
   screen:'today',mode:localStorage.getItem('xskt2.mode')||'universal',date:initial,
-  bestStart:firstOfMonth(initial),bestCount:7,guideStart:initial,guideDays:4,guideStake:75000,
+  bestStart:firstOfMonth(initial),bestCount:7,guideStart:firstOfMonth(initial),guideDays:4,guideStake:75000,guideBudget:0,
   statsWindow:'30',statsScope:scopeOptions.includes(storedScope)?storedScope:'station1',statsFilter:'ALL',
   calendarMonth:firstOfMonth(initial),compareStation:null,compareWindow:30,
   allYear:d.getFullYear(),allMonth:d.getMonth()+1,allTier:'ALL',allSearch:'',moreSub:null
@@ -76,6 +76,10 @@ $('#bestStart').addEventListener('change',async e=>{state.bestStart=clampDate(e.
 $('#bestPrevMonth').onclick=async()=>{state.bestStart=shiftMonth(firstOfMonth(state.bestStart),-1);await renderBest(ctx);syncControls();};
 $('#bestNextMonth').onclick=async()=>{state.bestStart=shiftMonth(firstOfMonth(state.bestStart),1);await renderBest(ctx);syncControls();};
 $('#guideStake').addEventListener('change',async e=>{state.guideStake=Math.max(15000,Number(e.target.value)||15000);await renderGuide(ctx);syncControls();});
+$('#guideStep').addEventListener('change',async e=>{state.guideStake=Math.max(1,Math.floor(Number(e.target.value)||1))*15000;await renderGuide(ctx);syncControls();});
+$('#guideBudget').addEventListener('change',async e=>{state.guideBudget=Math.max(0,Math.floor(Number(e.target.value)||0));await renderGuide(ctx);syncControls();});
+$('#guideStartDate').addEventListener('change',async e=>{state.guideStart=clampDate(e.target.value||firstOfMonth(state.guideStart));await renderGuide(ctx);syncControls();});
+$('#guideCustomCount').addEventListener('change',async e=>{state.guideDays=Math.max(1,Math.min(31,Math.floor(Number(e.target.value)||1)));await renderGuide(ctx);syncControls();});
 $('#guidePrevMonth').onclick=async()=>{state.guideStart=shiftMonth(firstOfMonth(state.guideStart),-1);await renderGuide(ctx);syncControls();};
 $('#guideNextMonth').onclick=async()=>{state.guideStart=shiftMonth(firstOfMonth(state.guideStart),1);await renderGuide(ctx);syncControls();};
 $('#calPrev').onclick=async()=>{state.calendarMonth=shiftMonth(state.calendarMonth,-1);await renderCalendar(ctx);};
@@ -91,6 +95,6 @@ $('#installBtn').onclick=async()=>{if(!deferredInstall)return;deferredInstall.pr
 window.addEventListener('appinstalled',()=>{$('#installBtn').hidden=true;toast('Đã cài XSKT2')});
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(console.warn));
 
-document.addEventListener('visibilitychange',()=>{if(!document.hidden){invalidateHistory();if(['today','stats','best'].includes(state.screen))renderActive();}});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){invalidateHistory();if(['today','stats','best','guide'].includes(state.screen))renderActive();}});
 window.addEventListener('online',()=>{invalidateHistory();renderActive()});
 initSelects();syncNav();syncControls();renderActive();

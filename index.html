@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="./assets/audit-v2.css">
   <link rel="stylesheet" href="./assets/audit-v3.css">
   <link rel="stylesheet" href="./assets/station-v31.css">
+  <link rel="stylesheet" href="./assets/guide-v33.css">
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
   <link rel="icon" href="./icons/icon-192.png">
   <title>XSKT2 — Thiên thời & Cá nhân</title>
@@ -21,7 +22,7 @@
 <div id="app">
   <header class="app-header">
     <div class="header-copy">
-      <div class="eyebrow">XSKT2 V3.2 · UNIVERSAL V1.0 · PERSONAL V1.1</div>
+      <div class="eyebrow">XSKT2 V3.3 · UNIVERSAL V1.0 · PERSONAL V1.1</div>
       <h1 id="screenTitle">Hôm nay</h1>
     </div>
     <div class="header-actions">
@@ -65,9 +66,9 @@
 
     <section id="screen-guide" class="screen">
       <div class="method-hero">
-        <div class="method-kicker">STOP-ON-WIN · MONEY PLAN</div>
+        <div class="method-kicker">ĐÀI 1 · MÔ PHỎNG VỐN & REVIEW</div>
         <h2>Hướng dẫn theo chu kỳ</h2>
-        <p>Chọn số ngày tốt, nhập tiền ngày 1 và xem lộ trình theo bội 15.000đ/số. Money-management hoàn toàn tách khỏi scoring engine.</p>
+        <p>Chọn số ngày và mốc trong tháng. Đối chiếu kết quả đài 1, chi phí giả lập và điểm dừng. Không thay đổi scoring engine.</p>
       </div>
       <div class="period-toolbar"><button id="guidePrevMonth" class="round-btn">‹</button><button id="guidePeriod" class="period-label"></button><button id="guideNextMonth" class="round-btn">›</button></div>
       <div class="control-card">
@@ -76,13 +77,18 @@
           <button data-days="4" class="active">4</button><button data-days="7">7</button><button data-days="10">10</button>
           <button data-days="15">15</button><button data-days="20">20</button><button data-days="25">25</button>
         </div>
-        <label class="field"><span>Tiền ngày 1 · mỗi số</span><input id="guideStake" type="number" min="15000" step="15000" value="75000" inputmode="numeric"></label>
+        <label class="field"><span>Số ngày tùy chỉnh (1–31)</span><input id="guideCustomCount" type="number" min="1" max="31" step="1" inputmode="numeric"></label>
+        <label class="field"><span>Mốc bắt đầu trong tháng</span><input id="guideStartDate" type="date" min="2026-01-01" max="2050-12-31"></label>
+        <label class="field"><span>Tiền giả lập mỗi số</span><input id="guideStake" type="number" min="15000" step="15000" value="75000" inputmode="numeric"></label>
+        <label class="field"><span>Bước số (1 bước = 15.000đ/số)</span><input id="guideStep" type="number" min="1" step="1" inputmode="numeric"></label>
+        <label class="field"><span>Giới hạn tổng chi phí giả lập (đ)</span><input id="guideBudget" type="number" min="0" max="1000000000" step="1" value="0" inputmode="numeric"></label>
+        <div class="helper">Nhập giới hạn ngân sách để bật mô phỏng. Mặc định 0đ, không tự đề xuất số tiền.</div>
         <div id="stakeWarning" class="helper"></div>
       </div>
       <div id="guideSummary"></div>
       <div class="section-title">Ngày được chọn</div>
       <div id="guideDates" class="guide-date-list"></div>
-      <div class="section-title">Kế hoạch stop-on-win</div>
+      <div class="section-title">Mô phỏng chi phí từng ngày · mức cố định</div>
       <div id="guidePlan" class="guide-plan-list"></div>
       <div id="guideFormula" class="method-note"></div>
       <div class="method-note warning"><b>Lưu ý</b><span>Đây là công cụ mô phỏng vốn theo payout giả định, không làm tăng xác suất trúng và không được dùng để sửa Chủ 1/Chủ 2.</span></div>
@@ -193,6 +199,6 @@
 </div>
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script type="module" src="./assets/app.js?v=3.2.0"></script>
+<script type="module" src="./assets/app.js?v=3.3.0"></script>
 </body>
 </html>

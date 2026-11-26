@@ -6,7 +6,7 @@ import {loadMonthlyDays,monthlyResult,monthlySummary} from './monthly-v32.js';
 import {loadRecord,loadBestDays,loadMonth,loadRange,loadYear,loadHistoryIndex,loadResearch,historyDay,fmtDate,monthLabel,firstOfMonth,shiftMonth,daysInMonth,weekdayMon0,addDays,MIN_DATE,MAX_DATE,pct,esc,money,parseISO} from './data.js';
 import {readProfile,analyzeProfile,personalRanking,picksFor,elementLabel} from './personal.js';
 import {scorePicks,theoreticalTwoPickBaseline,stationMatch,stationsForDate,stationHistory,uniqueHitRate,numberTable,anomalyFor,anomalyLabel,matchSummaryText,BASELINE_TWO_18} from './history.js';
-import {buildStopOnWinPlan,normalizeStake,STEP,PAYOUT_PER_STEP} from './guide.js';
+import {renderGuideV33} from './guide-v33.js';
 
 function modeSwitch(state,profile){return `<div class="mode-switch"><button data-action="mode" data-mode="universal" class="${state.mode==='universal'?'active':''}">🌤 Thiên thời</button><button data-action="mode" data-mode="personal" class="${state.mode==='personal'?'active':''}">👤 Cá nhân${profile?'':' · chưa có hồ sơ'}</button></div>`}
 function tierClass(t){return `tier-${String(t||'C').toLowerCase()}`}
@@ -73,16 +73,7 @@ export async function renderBest(ctx){
   }catch(e){if(ctx.bestRequest===request)list.innerHTML=`<div class="error-card">${esc(e.message)}</div>`}
 }
 
-export async function renderGuide(ctx){
-  const {state,$}=ctx,normalized=normalizeStake(state.guideStake);$('#guideStake').value=state.guideStake;$('#guidePeriod').textContent=monthLabel(state.guideStart);
-  $('#stakeWarning').textContent=normalized.rounded?`Số tiền được làm tròn lên ${money(normalized.stake)} = ${normalized.steps} bước.`:`${normalized.steps} bước · mỗi bước ${money(STEP)}/số.`;
-  try{const dates=await loadBestDays(state.guideStart,state.guideDays),plan=buildStopOnWinPlan(state.guideDays,state.guideStake),profile=readProfile();
-    $('#guideSummary').innerHTML=`<div class="summary-strip"><div><span>Chu kỳ</span><b>${state.guideDays} ngày tốt</b></div><div><span>Ngày 1</span><b>${money(plan.first.stake)}/số</b></div><div><span>Max outlay nếu toàn MISS</span><b>${money(plan.maxOutlay)}</b></div></div>`;
-    $('#guideDates').innerHTML=dates.map((r,i)=>{const p=picksFor(r,state.mode,profile);return `<button data-action="open-date" data-date="${r.date}"><span>Ngày ${i+1}</span><b>${fmtDate(r.date)} · ${p.primary} · ${p.secondary}</b><small>Score ${r.universal.day_score} · Tier ${r.universal.tier}</small></button>`}).join('');
-    $('#guidePlan').innerHTML=plan.rows.map((x,i)=>`<div class="plan-row"><div><span>Ngày ${i+1}</span><b>${x.steps} bước</b></div><div><span>Mỗi số</span><b>${money(x.stakePerNumber)}</b></div><div><span>Tổng cược</span><b>${money(x.totalStake)}</b></div><div><span>Nếu 1 nháy</span><b class="${x.netIfOneHit>0?'positive':''}">${x.netIfOneHit>=0?'+':''}${money(x.netIfOneHit)}</b></div></div>`).join('');
-    $('#guideFormula').innerHTML=`<b>Mô phỏng giả định cũ — không bảo đảm lợi nhuận</b><span>1 bước = ${money(STEP)}/số · 2 số/ngày · payout giả định ${money(STEP)} → ${money(PAYOUT_PER_STEP)}/nháy. Bước ngày sau là bội nhỏ nhất để <em>một nháy</em> có thể cover phần outlay trước đó theo giả định này.</span>`;
-  }catch(e){$('#guidePlan').innerHTML=`<div class="error-card">${esc(e.message)}</div>`}
-}
+export async function renderGuide(ctx){return renderGuideV33(ctx);}
 
 export async function renderStats(ctx){
   const {state,$}=ctx,request=Symbol(),scope=state.statsScope;ctx.statsRequest=request;const h=await loadHealth(),{start,end}=statsBounds(state,h),idx=await loadHistoryIndex(start,end),dates=Object.keys(idx.dates).filter(d=>d>=start&&d<=end).sort();if(ctx.statsRequest!==request)return;$('#statsKpis').innerHTML='';
