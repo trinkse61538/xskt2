@@ -21,7 +21,7 @@
 <div id="app">
   <header class="app-header">
     <div class="header-copy">
-      <div class="eyebrow">XSKT2 V3.1 · UNIVERSAL V1.0 · PERSONAL V1.1</div>
+      <div class="eyebrow">XSKT2 V3.2 · UNIVERSAL V1.0 · PERSONAL V1.1</div>
       <h1 id="screenTitle">Hôm nay</h1>
     </div>
     <div class="header-actions">
@@ -48,7 +48,7 @@
       </div>
       <div class="screen-intro">
         <strong>Ngày tốt theo Universal Day Score</strong>
-        <span>Chấm tất cả ngày hợp lệ → lấy N ngày chất lượng cao nhất → sắp lại theo ngày. Không phải N ngày liên tiếp.</span>
+        <span>Chỉ xét ngày trong tháng đang xem, từ mốc đã chọn đến cuối tháng; sắp lại theo ngày. Day Score không phải xác suất trúng.</span>
       </div>
       <div class="control-card">
         <div class="control-label"><span>Số ngày</span><b>4 / 7 / 10 / 15 / 20 / 25</b></div>
@@ -57,7 +57,7 @@
           <button data-count="15">15</button><button data-count="20">20</button><button data-count="25">25</button>
         </div>
         <label class="field"><span>Mốc sớm nhất được phép chọn</span><input id="bestStart" type="date" min="2026-01-01" max="2050-12-31"></label>
-        <div class="helper">Nếu phần còn lại của tháng không đủ N ngày, XSKT2 tự mở rộng sang tháng sau.</div>
+        <div class="helper">Nếu không đủ N ngày, chỉ hiển thị số ngày còn lại trong tháng. Không tự mở rộng sang tháng sau.</div>
       </div>
       <div id="bestSummary"></div>
       <div id="bestList" class="day-list"></div>
@@ -193,6 +193,6 @@
 </div>
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script type="module" src="./assets/app.js?v=2.0.0"></script>
+<script type="module" src="./assets/app.js?v=3.2.0"></script>
 </body>
 </html>

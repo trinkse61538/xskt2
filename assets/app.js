@@ -10,7 +10,7 @@ const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const initial=todayISO(),d=parseISO(initial);
 const state={
   screen:'today',mode:localStorage.getItem('xskt2.mode')||'universal',date:initial,
-  bestStart:initial,bestCount:7,guideStart:initial,guideDays:4,guideStake:75000,
+  bestStart:firstOfMonth(initial),bestCount:7,guideStart:initial,guideDays:4,guideStake:75000,
   statsWindow:'30',statsScope:scopeOptions.includes(storedScope)?storedScope:'station1',statsFilter:'ALL',
   calendarMonth:firstOfMonth(initial),compareStation:null,compareWindow:30,
   allYear:d.getFullYear(),allMonth:d.getMonth()+1,allTier:'ALL',allSearch:'',moreSub:null
@@ -41,7 +41,7 @@ function syncControls(){
   $$('#allTier button').forEach(b=>b.classList.toggle('active',b.dataset.tier===state.allTier));
   $('#allYear').value=String(state.allYear);$('#allMonth').value=String(state.allMonth);
 }
-function setDate(next){state.date=clampDate(next);$('#datePick').value=state.date;state.calendarMonth=firstOfMonth(state.date);if(state.bestStart.slice(0,7)!==state.date.slice(0,7))state.bestStart=state.date;renderActive();}
+function setDate(next){state.date=clampDate(next);$('#datePick').value=state.date;state.calendarMonth=firstOfMonth(state.date);if(state.bestStart.slice(0,7)!==state.date.slice(0,7))state.bestStart=firstOfMonth(state.date);renderActive();}
 
 function initSelects(){
   const choice=$('#statsScopeChoice');for(const v of scopeOptions){const o=document.createElement('option');o.value=v;o.textContent=v==='station1'?'Đài đầu theo lịch':v==='any'?'Tất cả đài':v.slice(8);choice.append(o)}
@@ -91,6 +91,6 @@ $('#installBtn').onclick=async()=>{if(!deferredInstall)return;deferredInstall.pr
 window.addEventListener('appinstalled',()=>{$('#installBtn').hidden=true;toast('Đã cài XSKT2')});
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(console.warn));
 
-document.addEventListener('visibilitychange',()=>{if(!document.hidden){invalidateHistory();if(['today','stats'].includes(state.screen))renderActive();}});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){invalidateHistory();if(['today','stats','best'].includes(state.screen))renderActive();}});
 window.addEventListener('online',()=>{invalidateHistory();renderActive()});
 initSelects();syncNav();syncControls();renderActive();

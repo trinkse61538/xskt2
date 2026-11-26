@@ -1,0 +1,16 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {selectMonthDays,monthlyResult,monthlySummary,loadMonthlyDays} from '../assets/monthly-v32.js';
+const record=(date,score,agreement=3)=>({date,universal:{day_score:score,agreement}});
+const rows=[record('2026-10-01',5),record('2026-10-04',10),record('2026-10-07',10,4),record('2026-10-31',8),record('2026-11-01',100)];
+test('strict month, score and agreement ordering, chronological display',()=>assert.deepEqual(selectMonthDays(rows,'2026-10-01',2).map(r=>r.date),['2026-10-04','2026-10-07']));
+test('late start never spills, even if requested count cannot be met',()=>assert.deepEqual(selectMonthDays(rows,'2026-10-31',7).map(r=>r.date),['2026-10-31']));
+test('year boundary never spills',()=>assert.deepEqual(selectMonthDays([record('2050-12-31',1),record('2051-01-01',99)],'2050-12-31',7).map(r=>r.date),['2050-12-31']));
+test('web loader fetches only the selected year',async()=>{const old=globalThis.fetch;const urls=[];globalThis.fetch=async url=>{urls.push(url);return {ok:true,json:async()=>rows}};try{assert.equal((await loadMonthlyDays('2026-10-01',7)).length,4);assert.deepEqual(urls,['./data/web/universal-2026.json'])}finally{globalThis.fetch=old}});
+const d='2026-10-23',p=['33','38'],draw=(station,hit=[])=>({station,tails:[...hit,...Array(18-hit.length).fill('00')]});
+const hist=draws=>({dates:{[d]:{draws}}});
+test('only first scheduled station counts and duplicates count as nhay',()=>{const x=monthlyResult(d,p,hist([draw('Bình Dương',['38']),draw('Vĩnh Long',['33','33'])]),d);assert.equal(x.station,'Vĩnh Long');assert.equal(x.status,'win');assert.equal(x.result.totalNhay,2)});
+test('other station hit does not change MISS',()=>assert.equal(monthlyResult(d,p,hist([draw('Bình Dương',['33']),draw('Vĩnh Long')]),d).status,'miss'));
+test('missing, duplicate, incomplete, unavailable and future are not MISS',()=>{for(const draws of [[],[draw('Bình Dương')],[draw('Vĩnh Long'),draw('Vĩnh Long')],[{station:'Vĩnh Long',tails:['33']} ]])assert.equal(monthlyResult(d,p,hist(draws),d).status,'missing');assert.equal(monthlyResult(d,p,{unavailable:true},d).status,'unavailable');assert.equal(monthlyResult(d,p,hist([draw('Vĩnh Long',['33'])]),'2026-10-22').status,'pending')});
+test('selected pair, not Universal pair, determines result',()=>assert.equal(monthlyResult(d,['11','12'],hist([draw('Vĩnh Long',['33'])]),d).status,'miss'));
+test('summary denominator excludes unscored days',()=>assert.deepEqual(monthlySummary([{status:'win',result:{totalNhay:2}},{status:'miss'},{status:'missing'},{status:'pending'}]),{wins:1,misses:1,scored:2,pending:2,nhay:2}));

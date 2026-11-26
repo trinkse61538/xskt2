@@ -1,7 +1,8 @@
 import {enrichResearch} from './research-v2.js';
 import {renderStationPanel,scopedDraws,stationResults} from './station-v31.js';
 import {healthPanel,statsBounds,renderAboutV2} from './health-v2.js';
-import {loadHealth} from './data.js';
+import {loadHealth,completedISO} from './data.js';
+import {loadMonthlyDays,monthlyResult,monthlySummary} from './monthly-v32.js';
 import {loadRecord,loadBestDays,loadMonth,loadRange,loadYear,loadHistoryIndex,loadResearch,historyDay,fmtDate,monthLabel,firstOfMonth,shiftMonth,daysInMonth,weekdayMon0,addDays,MIN_DATE,MAX_DATE,pct,esc,money,parseISO} from './data.js';
 import {readProfile,analyzeProfile,personalRanking,picksFor,elementLabel} from './personal.js';
 import {scorePicks,theoreticalTwoPickBaseline,stationMatch,stationsForDate,stationHistory,uniqueHitRate,numberTable,anomalyFor,anomalyLabel,matchSummaryText,BASELINE_TWO_18} from './history.js';
@@ -48,13 +49,28 @@ function differenceBlock(r,p){
 }
 
 export async function renderBest(ctx){
-  const {state,$}=ctx;$('#bestPeriod').textContent=monthLabel(state.bestStart);$('#bestStart').value=state.bestStart;
-  const list=$('#bestList');list.innerHTML='<div class="skeleton-card">Đang xếp hạng…</div>';
-  try{const rows=await loadBestDays(state.bestStart,state.bestCount),profile=readProfile();
-    const scores=rows.map(x=>x.universal.day_score),avg=scores.reduce((a,b)=>a+b,0)/(scores.length||1);
-    $('#bestSummary').innerHTML=`<div class="summary-strip"><div><span>${state.bestCount} ngày</span><b>${rows.length?`${fmtDate(rows[0].date,false)} → ${fmtDate(rows.at(-1).date,false)}`:'—'}</b></div><div><span>Score TB</span><b>${avg.toFixed(1)}</b></div><div><span>Mode số</span><b>${state.mode==='personal'&&profile?'Personal':'Universal'}</b></div></div>`;
-    list.innerHTML=rows.map(r=>dayCard(r,picksFor(r,state.mode,profile),`<small>Agreement ${r.universal.agreement}/5</small>`)).join('');
-  }catch(e){list.innerHTML=`<div class="error-card">${esc(e.message)}</div>`}
+  const {state,$}=ctx,request=Symbol(),start=state.bestStart,count=state.bestCount,mode=state.mode;
+  ctx.bestRequest=request;
+  $('#bestPeriod').textContent=monthLabel(start);$('#bestStart').value=start;
+  const list=$('#bestList'),summary=$('#bestSummary');
+  list.innerHTML='<div class="skeleton-card">Đang tải danh sách và kết quả đài 1…</div>';summary.innerHTML='';
+  try{
+    const [rows,hist]=await Promise.all([loadMonthlyDays(start,count),loadHistoryIndex(start).catch(()=>({dates:{},unavailable:true}))]);
+    if(ctx.bestRequest!==request)return;
+    const profile=readProfile(),completed=completedISO(),items=rows.map(r=>{
+      const picks=picksFor(r,mode,profile);return {r,picks,...monthlyResult(r.date,[picks.primary,picks.secondary],hist,completed)};
+    });
+    const s=monthlySummary(items),avg=rows.length?rows.reduce((n,r)=>n+r.universal.day_score,0)/rows.length:null;
+    const modeLabel=items.some(x=>x.picks.personal)?'Personal':'Universal';
+    summary.innerHTML=`<div class="summary-strip"><div><span>${rows.length}/${count} ngày</span><b>${rows.length?`${fmtDate(rows[0].date,false)} → ${fmtDate(rows.at(-1).date,false)}`:'—'}</b></div><div><span>Score TB</span><b>${avg===null?'—':avg.toFixed(1)}</b></div><div><span>Mode số</span><b>${modeLabel}</b></div></div>
+      <div class="best32-summary" aria-label="Kết quả đài chính"><div><span>WIN / đã chấm</span><b>${s.wins}/${s.scored} · ${s.scored?pct(s.wins/s.scored):'—'}</b></div><div><span>MISS</span><b>${s.misses}</b></div><div><span>Nháy</span><b>${s.nhay}</b></div><div><span>Chưa chấm</span><b>${s.pending}</b></div></div>
+      <p class="helper">Đài 1 theo lịch từng ngày · WIN là có ít nhất một số xuất hiện, không phải lợi nhuận. ${rows.length<count?'Không đủ số ngày trong tháng từ mốc đã chọn; không chuyển sang tháng sau.':''}</p>`;
+    list.innerHTML=items.map(x=>{
+      const label={win:'WIN',miss:'MISS',pending:'CHỜ KQ',missing:'THIẾU DỮ LIỆU',unavailable:'LỖI TẢI KQ'}[x.status];
+      const detail=x.result?(x.result.win?` · Trúng ${x.result.hitNumbers.map(esc).join(', ')} · ${x.result.totalNhay} nháy`:' · Không xuất hiện'):'';
+      return dayCard(x.r,x.picks,`<small>Agreement ${x.r.universal.agreement}/5</small><small class="best32-result"><strong class="best32-${x.status}">${label}</strong> · Đài 1: ${esc(x.station)}${detail}</small>`);
+    }).join('')||'<div class="empty-note">Không có ngày hợp lệ trong phạm vi tháng đã chọn.</div>';
+  }catch(e){if(ctx.bestRequest===request)list.innerHTML=`<div class="error-card">${esc(e.message)}</div>`}
 }
 
 export async function renderGuide(ctx){
