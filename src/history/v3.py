@@ -139,7 +139,7 @@ def horizontal(table,d,source):
 
 def parse_xoso(html,d,source):
     from bs4 import BeautifulSoup
-    soup=BeautifulSoup(html,'html.parser');candidates=[]
+    soup=BeautifulSoup(html,'html5lib');candidates=[]
     for table in soup.find_all('table'):
         # Use nearest dated heading, not the unrelated date in navigation or page footer.
         heading=next((h for h in table.find_all_previous(['h1','h2','h3','h4']) if date_tokens(h.get_text(' ',strip=True))),None)
