@@ -1,0 +1,16 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {stationResults,scopedDraws,scoreStation,recentSummary,stationNames,describeHits} from '../assets/station-v31.js';
+const schedule=['Tây Ninh','An Giang','Bình Thuận'];
+const draw=(station,hit=[],date='2026-11-19')=>({station,date,tails:[...hit,...Array(18-hit.length).fill('00')]});
+const draws=[draw('Tây Ninh',['33']),draw('An Giang'),draw('Bình Thuận')];
+const picks=['33','38'];
+test('known UI case: only Tây Ninh hit',()=>{const rows=stationResults(picks,schedule,draws);assert.deepEqual(rows.map(x=>[x.station,x.result.win,x.result.totalNhay]),[['Tây Ninh',true,1],['An Giang',false,0],['Bình Thuận',false,0]])});
+test('named station filter does not count another station hit',()=>{assert.equal(scoreStation(picks,scopedDraws(draws,'station:An Giang',schedule)).win,false);assert.equal(scopedDraws(draws,'station:Vĩnh Long',schedule).length,0)});
+test('missing or partial draw is not a miss',()=>{assert.equal(stationResults(picks,schedule,draws.slice(0,1))[1].result,null);assert.equal(scopedDraws(draws.slice(0,1),'any',schedule).length,0);assert.equal(stationResults(picks,schedule,[{station:'Tây Ninh',tails:['33']}])[0].result,null)});
+test('first station comes from schedule not input ordering',()=>{assert.equal(scopedDraws([...draws].reverse(),'station1',schedule)[0].station,'Tây Ninh')});
+test('duplicate occurrences count separately, duplicate picks do not',()=>{const r=scoreStation(['33','33','38'],[draw('Tây Ninh',['33','33','38'])]);assert.equal(r.totalNhay,3);assert.equal(describeHits(r),'33 × 2 · 38 × 1')});
+test('history cutoff excludes same day and future, insufficient samples not estimated',()=>{const rows=[draw('A',['33'],'2026-11-18'),draw('A',['33'],'2026-11-19'),draw('A',['33'],'2026-11-20')];assert.equal(recentSummary(rows,'2026-11-19',picks,2).rate,null);assert.equal(recentSummary(rows,'2026-11-19',picks,1).hits,1)});
+test('missing stations do not become zero observations',()=>{assert.equal(recentSummary([],'2026-11-19',picks,10).n,0);assert.deepEqual(stationNames(schedule,draws),schedule)});
+test('duplicate station rows cannot appear as verified results',()=>{assert.equal(stationResults(picks,schedule,[...draws,draws[0]])[0].result,null);assert.equal(scopedDraws([...draws,draws[0]],'any',schedule).length,0)});
+test('named and first scopes reject duplicate rows',()=>{const bad=[...draws,draws[0]];assert.equal(scopedDraws(bad,'station:Tây Ninh',schedule).length,0);assert.equal(scopedDraws(bad,'station1',schedule).length,0)});

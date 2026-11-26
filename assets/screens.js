@@ -1,4 +1,5 @@
 import {enrichResearch} from './research-v2.js';
+import {renderStationPanel,scopedDraws,stationResults} from './station-v31.js';
 import {healthPanel,statsBounds,renderAboutV2} from './health-v2.js';
 import {loadHealth} from './data.js';
 import {loadRecord,loadBestDays,loadMonth,loadRange,loadYear,loadHistoryIndex,loadResearch,historyDay,fmtDate,monthLabel,firstOfMonth,shiftMonth,daysInMonth,weekdayMon0,addDays,MIN_DATE,MAX_DATE,pct,esc,money,parseISO} from './data.js';
@@ -20,26 +21,24 @@ export async function renderToday(ctx){
     if(state.date!==selected)return;
     const profile=readProfile(),personal=personalRanking(r,profile),view=picksFor(r,state.mode,profile),u=r.universal;
     if(state.mode==='personal'&&!profile) state.mode='universal';
-    const actual=historyDay(hist,r.date),draws=actual?.draws||[],uResult=draws.length?scorePicks([u.primary,u.secondary],draws):null,pResult=draws.length&&personal?scorePicks([personal.primary,personal.secondary],draws):null;
-    const sm={ranked:[]};
+    const actual=historyDay(hist,r.date),draws=actual?.draws||[];
     const rankRows=(view.ranking||[]).slice(0,10).map((x,i)=>{
       const rank=x.rank??i+1,uRank=x.uRank??x.rank,delta=x.uRank?x.uRank-(i+1):0;
       return `<div class="rank-row"><b>#${rank}</b><span class="rank-num">${esc(x.number)}</span><span class="rank-note">${x.uRank?`Universal #${x.uRank} ${delta>0?`· ↑${delta}`:delta<0?`· ↓${Math.abs(delta)}`:'· giữ'}`:`Agreement ${x.agreement}/5`}</span><b>${Number(x.score).toFixed(1)}</b></div>`;
     }).join('');
     const difference=personal?differenceBlock(r,personal):`<div class="empty-note">Chưa có Personal Overlay. Tạo hồ sơ trong <button data-action="open-more" data-more="profile">Thêm → Hồ sơ Personal</button>.</div>`;
-    const resultBlock=!draws.length?`<div class="result-strip pending"><b>${hist.unavailable?'KHÔNG TẢI ĐƯỢC HISTORY':r.date<= (hist.expectedThrough||'')?'THIẾU DỮ LIỆU':'CHƯA CÓ KẾT QUẢ'}</b><span>${hist.updatedThrough?`History cập nhật tới ${fmtDate(hist.updatedThrough)}`:'Chưa bootstrap history vào XSKT2.'}</span></div>`:
-      `<div class="result-strip ${uResult.win?'win':'miss'}"><div><b>Universal · ${uResult.win?'WIN':'MISS'}</b><span>${uResult.totalNhay} nháy · ${uResult.hitNumbers.join(', ')||'không trúng'}</span></div>${personal?`<div><b>Personal · ${pResult.win?'WIN':'MISS'}</b><span>${pResult.totalNhay} nháy · ${pResult.hitNumbers.join(', ')||'không trúng'}</span></div>`:''}</div>`;
     host.innerHTML=`${modeSwitch(state,profile)}
       <section class="hero-card ${state.mode==='personal'&&personal?'personal':''}">
         <div class="hero-top"><div><div class="eyebrow">${state.mode==='personal'&&personal?'PERSONAL OVERLAY':'UNIVERSAL · THIÊN THỜI'} · ${fmtDate(r.date)}</div><h2>${esc((r.calendar||{}).day||'')}</h2><p>${calendarMeta(r)}</p></div><span class="tier-pill ${tierClass(u.tier)}">Tier ${esc(u.tier)}</span></div>
         <div class="picks"><div class="pick"><span>Chủ 1</span><b>${esc(view.primary)}</b></div><div class="pick"><span>Chủ 2</span><b>${esc(view.secondary)}</b></div></div>
         <div class="metrics"><div><b>${u.day_score}</b><span>Day Score</span></div><div><b>${u.agreement}/5</b><span>Agreement</span></div><div><b>#${u.month_rank??'—'}</b><span>Rank tháng</span></div><div><b>${esc(u.tier)}</b><span>Tier</span></div></div>
       </section>
-      ${resultBlock}
+      <div id="todayStationV31"></div>
       <section class="card"><div class="card-head"><div><span>TOP 5</span><h3>${state.mode==='personal'&&personal?'Personal ranking':'Universal ranking'}</h3></div></div>${topChips(view.top5)}</section>
       <section class="card"><div class="card-head"><div><span>RANKING</span><h3>Top 10 hôm nay</h3></div><small>Score ≠ xác suất</small></div><div class="rank-table">${rankRows}</div></section>
       <section class="card"><div class="card-head"><div><span>UNIVERSAL ↔ PERSONAL</span><h3>Khác biệt & giải thích</h3></div></div>${difference}</section>
-      <section class="research-card"><div class="research-head"><div><span>STATION MATCH · RESEARCH ONLY</span><b>${'Mở đối chiếu để tải lịch sử theo đài'}</b></div><button data-action="open-more" data-more="compare">Mở đối chiếu</button></div><p>Core đã khóa trước khi nhìn history. Recent Form / Station Match chỉ đối chiếu, không sửa Chủ 1/Chủ 2.</p></section>`;
+`;
+    renderStationPanel(host.querySelector('#todayStationV31'),{date:r.date,schedule:stationsForDate(r.date),draws,models:[{id:'universal',label:'Universal · Thiên thời',picks:[u.primary,u.secondary]},...(personal?[{id:'personal',label:'Personal · Cá nhân',picks:[personal.primary,personal.secondary]}]:[])],active:state.mode,historyUnavailable:hist.unavailable,expectedThrough:hist.expectedThrough,loadResearch,fmtDate,enrichResearch});
   }catch(e){host.innerHTML=`<div class="error-card"><b>Không tải được ngày</b><span>${esc(e.message)}</span></div>`}
 }
 
@@ -70,19 +69,23 @@ export async function renderGuide(ctx){
 }
 
 export async function renderStats(ctx){
-  const {state,$}=ctx,h=await loadHealth(),{start,end}=statsBounds(state,h),idx=await loadHistoryIndex(start,end),dates=Object.keys(idx.dates).filter(d=>d>=start&&d<=end).sort();$('#statsKpis').innerHTML='';
+  const {state,$}=ctx,request=Symbol(),scope=state.statsScope;ctx.statsRequest=request;const h=await loadHealth(),{start,end}=statsBounds(state,h),idx=await loadHistoryIndex(start,end),dates=Object.keys(idx.dates).filter(d=>d>=start&&d<=end).sort();if(ctx.statsRequest!==request)return;$('#statsKpis').innerHTML='';
   const expected=Math.max(0,Math.round((Date.parse(end)-Date.parse(start))/86400000)+1);const coverage=`${fmtDate(start)} – ${fmtDate(end)} · ${dates.length}/${expected} ngày có dữ liệu · ${expected-dates.length} ngày không có bản ghi (gồm NO_DRAW nếu có)`;
   if(!dates.length){
     $('#statsFreshness').innerHTML=`<div class="empty-state"><b>Không có kết quả trong cửa sổ đã chọn</b><span>${esc(coverage)}</span></div>`;$('#statsBaseline').innerHTML='';$('#statsDays').innerHTML='';return;
   }
   $('#statsFreshness').innerHTML=`<div class="freshness">History tới <b>${fmtDate(idx.updatedThrough)}</b> · ${esc(coverage)}</div>`;
   const records=await loadRange(dates[0],dates.at(-1)),byDate=new Map(records.map(r=>[r.date,r])),profile=readProfile(),rows=[];
-  for(const d of dates){const r=byDate.get(d),h=idx.dates[d];if(!r||!h)continue;const draws=state.statsScope==='station1'?h.draws.slice(0,1):h.draws;const up=[r.universal.primary,r.universal.secondary],ur=scorePicks(up,draws),p=personalRanking(r,profile),pr=p?scorePicks([p.primary,p.secondary],draws):null;rows.push({date:d,r,draws,up,ur,p,pr,baseline:theoreticalTwoPickBaseline(draws.reduce((s,x)=>s+(x.tails||[]).length,0))})}
+  if(ctx.statsRequest!==request)return;
+  for(const d of dates){const r=byDate.get(d),h=idx.dates[d];if(!r||!h)continue;const draws=scopedDraws(h.draws,scope,stationsForDate(d));if(!draws.length)continue;const up=[r.universal.primary,r.universal.secondary],ur=scorePicks(up,draws),p=personalRanking(r,profile),pr=p?scorePicks([p.primary,p.secondary],draws):null;rows.push({date:d,r,draws,up,ur,p,pr,baseline:theoreticalTwoPickBaseline(draws.reduce((s,x)=>s+(x.tails||[]).length,0))})}
+  const scopeLabel=scope==='station1'?'Đài đầu theo lịch':scope==='any'?'Tất cả đài':scope.slice(8);
+  $('#statsFreshness').innerHTML=`<div class="freshness">${esc(scopeLabel)} · ${rows.length} ngày/kỳ đủ dữ liệu được chấm · ${esc(coverage)}. Ngày đài không mở hoặc thiếu dữ liệu không tính MISS.</div>`;
+  if(!rows.length){$('#statsKpis').innerHTML='<div class="empty-state">Không có kỳ hợp lệ theo phạm vi.</div>';$('#statsBaseline').innerHTML='';$('#statsDays').innerHTML='';return;}
   const uWins=rows.filter(x=>x.ur.win).length,pRows=rows.filter(x=>x.pr),pWins=pRows.filter(x=>x.pr.win).length,uRate=uWins/(rows.length||1),pRate=pRows.length?pWins/pRows.length:null,baseline=rows.reduce((s,x)=>s+x.baseline,0)/(rows.length||1),uNhay=rows.reduce((s,x)=>s+x.ur.totalNhay,0),pNhay=pRows.reduce((s,x)=>s+x.pr.totalNhay,0);
   $('#statsKpis').innerHTML=`<div class="kpi primary"><span>Universal Chủ 1+2</span><b>${pct(uRate)}</b><small>${uWins}/${rows.length} WIN · ${uNhay} nháy</small></div><div class="kpi personal"><span>Personal Chủ 1+2</span><b>${pRate===null?'—':pct(pRate)}</b><small>${pRate===null?'Tạo profile để chấm':`${pWins}/${pRows.length} WIN · ${pNhay} nháy`}</small></div><div class="kpi"><span>Random baseline</span><b>${pct(baseline)}</b><small>Lý thuyết · theo số tails/scope</small></div><div class="kpi"><span>Personal lift</span><b>${pRate===null?'—':`${pRate-uRate>=0?'+':''}${((pRate-uRate)*100).toFixed(1)}đ%`}</b><small>Personal − Universal</small></div>`;
-  $('#statsBaseline').innerHTML=`<div class="baseline-card"><b>Delta Universal vs baseline: ${(uRate-baseline)>=0?'+':''}${((uRate-baseline)*100).toFixed(1)} điểm %</b><span>${state.statsScope==='station1'?`Baseline 2 số / 18 tails ≈ ${pct(BASELINE_TWO_18,2)}.`:'Any Station dùng baseline lý thuyết theo tổng số tails thực tế từng ngày.'} Đây không phải predictive probability.</span></div>`;
+  $('#statsBaseline').innerHTML=`<div class="baseline-card"><b>Delta Universal vs baseline: ${(uRate-baseline)>=0?'+':''}${((uRate-baseline)*100).toFixed(1)} điểm %</b><span>${scope!=='any'?`Baseline 2 số / 18 kết quả ≈ ${pct(BASELINE_TWO_18,2)}.`:'Tất cả đài dùng baseline lý thuyết theo tổng số kết quả thực tế từng ngày.'} Đây không phải predictive probability.</span></div>`;
   const filtered=rows.filter(x=>state.statsFilter==='ALL'||(state.statsFilter==='WIN'?x.ur.win:!x.ur.win)).reverse();
-  $('#statsDays').innerHTML=filtered.slice(0,120).map(x=>`<button class="stats-day ${x.ur.win?'win':'miss'}" data-action="open-date" data-date="${x.date}"><div><span>${fmtDate(x.date)}</span><b>${x.up.join(' · ')}</b><small>${x.ur.hitNumbers.length?`Hit ${x.ur.hitNumbers.join(', ')} · ${x.ur.totalNhay} nháy`:'Không xuất hiện'}</small></div><strong>${x.ur.win?'WIN':'MISS'}</strong>${x.pr?`<em>Personal ${x.pr.win?'WIN':'MISS'}</em>`:''}</button>`).join('')||'<div class="empty-note">Không có ngày theo bộ lọc.</div>';
+  $('#statsDays').innerHTML=filtered.slice(0,120).map(x=>`<button class="stats-day ${x.ur.win?'win':'miss'}" data-action="open-date" data-date="${x.date}" data-follow-station="${esc(scope==='any'?'all':x.draws[0].station)}"><div><span>${fmtDate(x.date)} · ${esc(scope==='any'?'Tất cả đài':x.draws[0].station)}</span><b>${x.up.join(' · ')}</b><small>${x.ur.hitNumbers.length?`Hit ${x.ur.hitNumbers.join(', ')} · ${x.ur.totalNhay} nháy · ${esc(stationResults(x.up,x.draws.map(d=>d.station),x.draws).filter(t=>t.result?.win).map(t=>t.station).join(', '))}`:'Không xuất hiện'}</small></div><strong>${x.ur.win?'WIN':'MISS'}</strong>${x.pr?`<em>Personal ${x.pr.win?'WIN':'MISS'}</em>`:''}</button>`).join('')||'<div class="empty-note">Không có ngày theo bộ lọc.</div>';
 }
 
 export async function renderCalendar(ctx){

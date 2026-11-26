@@ -3,7 +3,7 @@
 import hashlib,json,time,urllib.request,sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1];BASE='https://xskt2.khaitringuyen.com/'
-FILES=('package.json','sw.js','assets/health-v2.js','data/history/derived/health.json','data/backtest/research-v3.json')
+FILES=('package.json','sw.js','assets/health-v2.js','data/history/derived/health.json','data/backtest/research-v3.json','index.html','assets/app.js','assets/screens.js','assets/station-v31.js','assets/station-v31.css')
 def verify():
     remote={};errors=[]
     for f in FILES:

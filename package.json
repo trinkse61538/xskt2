@@ -1,1 +1,1 @@
-{"name":"xskt2-web","version":"3.0.1","private":true,"type":"module","scripts":{"test":"node tests/research-v2.test.mjs"}}
+{"name":"xskt2-web","version":"3.1.0","private":true,"type":"module","scripts":{"test":"node tests/research-v2.test.mjs && node --test tests/station-v31.test.mjs"}}

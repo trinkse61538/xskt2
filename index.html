@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="./assets/style.css">
   <link rel="stylesheet" href="./assets/audit-v2.css">
   <link rel="stylesheet" href="./assets/audit-v3.css">
+  <link rel="stylesheet" href="./assets/station-v31.css">
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
   <link rel="icon" href="./icons/icon-192.png">
   <title>XSKT2 — Thiên thời & Cá nhân</title>
@@ -20,7 +21,7 @@
 <div id="app">
   <header class="app-header">
     <div class="header-copy">
-      <div class="eyebrow">XSKT2 · UNIVERSAL V1.0 · PERSONAL V1.0</div>
+      <div class="eyebrow">XSKT2 V3.1 · UNIVERSAL V1.0 · PERSONAL V1.1</div>
       <h1 id="screenTitle">Hôm nay</h1>
     </div>
     <div class="header-actions">
@@ -89,7 +90,7 @@
 
     <section id="screen-stats" class="screen">
       <div class="method-hero stats-hero">
-        <div class="method-kicker">FORWARD PERFORMANCE · HISTORY-ONLY EVALUATION</div>
+        <div class="method-kicker">RETROSPECTIVE · HISTORY-ONLY EVALUATION</div>
         <h2>Universal vs Personal vs Random</h2>
         <p>Đánh giá sau khi có kết quả. History chỉ dùng chấm WIN/MISS, nháy và research; không feedback vào prediction core.</p>
       </div>
@@ -98,9 +99,7 @@
           <button data-window="7">7d</button><button data-window="30" class="active">30d</button><button data-window="90">90d</button>
           <button data-window="365">365d</button><button data-window="month">Tháng</button><button data-window="all">Tất cả</button>
         </div>
-        <div id="statsScope" class="segmented compact">
-          <button data-scope="station1" class="active">Đài 1</button><button data-scope="any">Any Station</button>
-        </div>
+        <div id="statsScope"><select id="statsScopeChoice" aria-label="Phạm vi thống kê theo đài"></select></div>
       </div>
       <div id="statsFreshness"></div>
       <div id="statsKpis" class="stats-kpi-grid"></div>

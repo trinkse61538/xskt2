@@ -1,5 +1,9 @@
 import {todayISO,addDays,clampDate,firstOfMonth,shiftMonth,parseISO,localISO,MIN_DATE,MAX_DATE,invalidateHistory} from './data.js';
 import {readProfile,saveProfile,clearProfile} from './personal.js';
+import {XSMN_SCHEDULE} from './history.js';
+import {readChoice,saveChoice,FOLLOW_KEY,STATS_KEY} from './station-v31.js';
+const scopeOptions=['station1','any',...[...new Set(Object.values(XSMN_SCHEDULE).flat())].map(n=>'station:'+n)];
+const storedScope=readChoice(STATS_KEY,'station1');
 import {renderToday,renderBest,renderGuide,renderStats,renderCalendar,renderCompare,renderAll,renderProfile,renderMethod,renderAbout} from './screens.js';
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
@@ -7,7 +11,7 @@ const initial=todayISO(),d=parseISO(initial);
 const state={
   screen:'today',mode:localStorage.getItem('xskt2.mode')||'universal',date:initial,
   bestStart:initial,bestCount:7,guideStart:initial,guideDays:4,guideStake:75000,
-  statsWindow:'30',statsScope:'station1',statsFilter:'ALL',
+  statsWindow:'30',statsScope:scopeOptions.includes(storedScope)?storedScope:'station1',statsFilter:'ALL',
   calendarMonth:firstOfMonth(initial),compareStation:null,compareWindow:30,
   allYear:d.getFullYear(),allMonth:d.getMonth()+1,allTier:'ALL',allSearch:'',moreSub:null
 };
@@ -31,7 +35,7 @@ function syncControls(){
   $$('#bestCount button').forEach(b=>b.classList.toggle('active',Number(b.dataset.count)===state.bestCount));
   $$('#guideDayCount button').forEach(b=>b.classList.toggle('active',Number(b.dataset.days)===state.guideDays));
   $$('#statsWindow button').forEach(b=>b.classList.toggle('active',b.dataset.window===String(state.statsWindow)));
-  $$('#statsScope button').forEach(b=>b.classList.toggle('active',b.dataset.scope===state.statsScope));
+  $('#statsScopeChoice').value=state.statsScope;
   $$('#statsFilter button').forEach(b=>b.classList.toggle('active',b.dataset.filter===state.statsFilter));
   $$('#compareWindow button').forEach(b=>b.classList.toggle('active',Number(b.dataset.window)===Number(state.compareWindow)));
   $$('#allTier button').forEach(b=>b.classList.toggle('active',b.dataset.tier===state.allTier));
@@ -40,6 +44,8 @@ function syncControls(){
 function setDate(next){state.date=clampDate(next);$('#datePick').value=state.date;state.calendarMonth=firstOfMonth(state.date);if(state.bestStart.slice(0,7)!==state.date.slice(0,7))state.bestStart=state.date;renderActive();}
 
 function initSelects(){
+  const choice=$('#statsScopeChoice');for(const v of scopeOptions){const o=document.createElement('option');o.value=v;o.textContent=v==='station1'?'Đài đầu theo lịch':v==='any'?'Tất cả đài':v.slice(8);choice.append(o)}
+  choice.addEventListener('change',async()=>{state.statsScope=choice.value;saveChoice(STATS_KEY,choice.value);await renderActive()});
   $('#allYear').innerHTML=Array.from({length:25},(_,i)=>2026+i).map(y=>`<option value="${y}">${y}</option>`).join('');
   $('#allMonth').innerHTML=Array.from({length:12},(_,i)=>`<option value="${i+1}">Tháng ${i+1}</option>`).join('');
 }
@@ -52,14 +58,13 @@ document.addEventListener('click',async e=>{
   const action=e.target.closest('[data-action]');if(action){
     const a=action.dataset.action;
     if(a==='mode'){state.mode=action.dataset.mode;if(state.mode==='personal'&&!readProfile()){toast('Tạo hồ sơ Personal trước');await openMore('profile');return;}localStorage.setItem('xskt2.mode',state.mode);await renderActive();return;}
-    if(a==='open-date'){state.date=clampDate(action.dataset.date);state.calendarMonth=firstOfMonth(state.date);await setScreen('today');return;}
+    if(a==='open-date'){if(action.dataset.followStation)saveChoice(FOLLOW_KEY,action.dataset.followStation);state.date=clampDate(action.dataset.date);state.calendarMonth=firstOfMonth(state.date);await setScreen('today');return;}
     if(a==='open-more'){await openMore(action.dataset.more);return;}
     if(a==='station'){state.compareStation=action.dataset.station;await renderCompare(ctx);syncControls();return;}
   }
   const bc=e.target.closest('#bestCount [data-count]');if(bc){state.bestCount=Number(bc.dataset.count);await renderBest(ctx);syncControls();return;}
   const gd=e.target.closest('#guideDayCount [data-days]');if(gd){state.guideDays=Number(gd.dataset.days);await renderGuide(ctx);syncControls();return;}
   const sw=e.target.closest('#statsWindow [data-window]');if(sw){state.statsWindow=sw.dataset.window;await renderStats(ctx);syncControls();return;}
-  const ss=e.target.closest('#statsScope [data-scope]');if(ss){state.statsScope=ss.dataset.scope;await renderStats(ctx);syncControls();return;}
   const sf=e.target.closest('#statsFilter [data-filter]');if(sf){state.statsFilter=sf.dataset.filter;await renderStats(ctx);syncControls();return;}
   const cw=e.target.closest('#compareWindow [data-window]');if(cw){state.compareWindow=Number(cw.dataset.window);await renderCompare(ctx);syncControls();return;}
   const at=e.target.closest('#allTier [data-tier]');if(at){state.allTier=at.dataset.tier;await renderAll(ctx);syncControls();return;}
