@@ -1,48 +1,40 @@
 #!/usr/bin/env python3
-import json,math,sys
+import json,sys,hashlib
+from collections import defaultdict,Counter
+from datetime import date,datetime,timedelta
+from zoneinfo import ZoneInfo
 from pathlib import Path
-from collections import Counter,defaultdict
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT))
-from src.history.stats import theoretical_baseline
-RAW=ROOT/'data/history/raw';OUT=ROOT/'data/history/derived';OUT.mkdir(parents=True,exist_ok=True)
-SINGLE_BASELINE=1-.99**18
-
-def zscore(hits,n,p=SINGLE_BASELINE):
-    if not n:return 0.0
-    den=math.sqrt(n*p*(1-p))
-    return (hits-n*p)/den if den else 0.0
-
-def anomaly_payload(recent):
-    numbers={}
-    for i in range(100):
-        num=f'{i:02d}'; vals={}
-        for w in (30,100,300):
-            sample=recent[-w:]; n=len(sample); hits=sum(num in d['unique_hits'] for d in sample); vals[w]={'n':n,'hits':hits,'rate':hits/n if n else 0.0,'z':zscore(hits,n)}
-        z30,z100=vals[30]['z'],vals[100]['z']
-        if z100>=2 and z30>=1.5:state='PERSISTENT_UP'
-        elif z100<=-2 and z30<=-1.5:state='PERSISTENT_DOWN'
-        elif z30>=2:state='WATCH_UP'
-        elif z30<=-2:state='WATCH_DOWN'
-        else:state='NORMAL'
-        numbers[num]={'state':state,'z30':round(z30,2),'z100':round(z100,2),'z300':round(vals[300]['z'],2),'r30':round(vals[30]['rate'],6),'r100':round(vals[100]['rate'],6),'r300':round(vals[300]['rate'],6)}
-    return {'baseline_single_18':round(SINGLE_BASELINE,6),'numbers':numbers,'note':'Exploratory statistical anomaly only; anomaly is not physical causation and does not alter core picks.'}
-
+from src.history.integrity import validate_day,atomic_json,days
+from src.history.research import snapshot
+RAW=ROOT/'data/history/raw';OUT=ROOT/'data/history/derived'
 def main():
-    stations=defaultdict(lambda:{'draws':0,'tail_counts':Counter(),'hit_counts':Counter(),'recent':[]})
-    dates={}; latest=None
+    years=defaultdict(dict); stations=defaultdict(list); invalid=[]; sha=hashlib.sha256(); now=datetime.now(ZoneInfo('Asia/Ho_Chi_Minh'));target=now.date() if (now.hour,now.minute)>=(17,10) else now.date()-timedelta(days=1)
     for p in sorted(RAW.glob('*.json')):
-        obj=json.loads(p.read_text(encoding='utf-8')); latest=obj['date']; web_draws=[]
-        for d in obj['draws']:
-            tails=list(d.get('tails') or []);unique=sorted(set(tails));name=d['station'];st=stations[name]
-            st['draws']+=1;st['tail_counts'].update(tails);st['hit_counts'].update(unique);st['recent'].append({'date':obj['date'],'tails':tails,'unique_hits':unique})
-            web_draws.append({'station':name,'tails':tails})
-        dates[obj['date']]={'draws':web_draws}
-    station_payload={}
-    for name,v in stations.items():
-        recent=v['recent'][-300:]
-        station_payload[name]={'draws':v['draws'],'tail_counts':dict(v['tail_counts']),'hit_counts':dict(v['hit_counts']),'recent':recent,'anomaly':anomaly_payload(recent)}
-    payload={'updatedThrough':latest,'baseline_two_picks_18':theoretical_baseline(2,18),'stations':station_payload,'note':'Empirical history is evaluation/research only; duplicate tails are preserved.'}
-    (OUT/'recent-stats.json').write_text(json.dumps(payload,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
-    (OUT/'history-index.json').write_text(json.dumps({'updatedThrough':latest,'dates':dates,'note':'Web evaluation index. Tails preserve duplicates.'},ensure_ascii=False,separators=(',',':')),encoding='utf-8')
-    print('Built stats through',latest,'days',len(dates),'stations',len(stations))
-if __name__=='__main__':main()
+        try:
+            obj=validate_day(json.loads(p.read_text(encoding='utf-8')));d=obj['date']
+            if p.stem!=d or date.fromisoformat(d)>target:raise ValueError('date mismatch or future draw')
+        except Exception as e:invalid.append({'date':p.stem,'reason':str(e)});continue
+        sha.update(p.read_bytes()); draws=[]
+        for r in obj['draws']:
+            v={'station':r['station'],'tails':r['tails']};draws.append(v);stations[r['station']].append({'date':d,'tails':r['tails'],'unique_hits':sorted(set(r['tails']))})
+        years[d[:4]][d]={'draws':draws}
+    all_dates={d:v for year in years.values() for d,v in year.items()};latest=max(all_dates,default=None); rev=sha.hexdigest()[:16]
+    no_draw={p.name[:10] for p in (ROOT/'data/history/failures').glob('*-nodraw.json') if p.name[:10] not in all_dates}
+    coverage={}
+    for y,v in sorted(years.items()):
+        lo=max(date(int(y),1,1),date(2005,10,1));hi=min(date(int(y),12,31),target); expected=[d.isoformat() for d in days(lo,hi)]; missing=[d for d in expected if d not in v and d not in no_draw];coverage[y]={'expected':len(expected),'available':len(v),'noDraw':sum(d in no_draw for d in expected),'missing':missing};atomic_json(OUT/'years'/f'{y}.json',{'revision':rev,'dates':v})
+    # Include entirely missing recent years in health summary.
+    for y in range(2026,target.year+1):
+        if str(y) not in coverage:coverage[str(y)]={'expected':len(list(days(date(y,1,1),min(target,date(y,12,31))))),'available':0,'noDraw':0,'missing':[d.isoformat() for d in days(date(y,1,1),min(target,date(y,12,31)))]}
+    station_files={}; legacy_st={}
+    for name,rows in sorted(stations.items()):
+        key=hashlib.sha256(name.encode()).hexdigest()[:16];station_files[name]=key;atomic_json(OUT/'stations'/f'{key}.json',{'revision':rev,'station':name,'draws':rows});legacy_st[name]={'draws':len(rows),'tail_counts':dict(Counter(x for r in rows for x in r['tails'])),'hit_counts':dict(Counter(x for r in rows for x in r['unique_hits'])),'recent':rows[-300:]}
+    # Keep compatibility indexes for older clients; new clients use lazy shards.
+    atomic_json(OUT/'history-index.json',{'updatedThrough':latest,'dates':all_dates});atomic_json(OUT/'recent-stats.json',{'updatedThrough':latest,'stations':legacy_st})
+    global_research=snapshot(stations)
+    atomic_json(OUT/'global-anomaly.json',{'updatedThrough':latest,'revision':rev,**global_research})
+    global_summary={k:v for k,v in global_research.items() if k!='stations'}
+    atomic_json(OUT/'health.json',{'schema':2,'revision':rev,'updatedThrough':latest,'expectedThrough':target.isoformat(),'totalDays':len(all_dates),'years':sorted(years),'coverage':coverage,'stationFiles':station_files,'invalid':invalid,'globalAnomaly':global_summary,'note':'Missing dates are not MISS; NO_DRAW records are legacy source markers, not independent confirmation.'});print('Built',len(all_dates),'days through',latest,'invalid',len(invalid))
+    return 0 # rejected records are surfaced in health.json; workflow checks after committing valid progress
+if __name__=='__main__':raise SystemExit(main())

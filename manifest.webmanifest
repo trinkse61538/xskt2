@@ -1,11 +1,1 @@
-{
-  "name": "XSKT2 — Thiên thời & Cá nhân",
-  "short_name": "XSKT2",
-  "description": "Universal Core, Personal Overlay, ngày tốt và thống kê XSMN.",
-  "start_url": "./",
-  "scope": "./",
-  "display": "standalone",
-  "background_color": "#070b14",
-  "theme_color": "#0b1020",
-  "icons": []
-}
+{"name":"XSKT2 — Research Lab","short_name":"XSKT2","description":"Thống kê XSMN, lịch nghiên cứu Universal và Personal.","start_url":"./","scope":"./","display":"standalone","background_color":"#070b14","theme_color":"#0b1020","icons":[{"src":"./icons/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},{"src":"./icons/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}

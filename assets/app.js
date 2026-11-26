@@ -1,4 +1,4 @@
-import {todayISO,addDays,clampDate,firstOfMonth,shiftMonth,parseISO,localISO,MIN_DATE,MAX_DATE} from './data.js';
+import {todayISO,addDays,clampDate,firstOfMonth,shiftMonth,parseISO,localISO,MIN_DATE,MAX_DATE,invalidateHistory} from './data.js';
 import {readProfile,saveProfile,clearProfile} from './personal.js';
 import {renderToday,renderBest,renderGuide,renderStats,renderCalendar,renderCompare,renderAll,renderProfile,renderMethod,renderAbout} from './screens.js';
 
@@ -84,6 +84,8 @@ $('#clearProfile').onclick=()=>{clearProfile();state.mode='universal';localStora
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;$('#installBtn').hidden=false});
 $('#installBtn').onclick=async()=>{if(!deferredInstall)return;deferredInstall.prompt();await deferredInstall.userChoice;deferredInstall=null;$('#installBtn').hidden=true};
 window.addEventListener('appinstalled',()=>{$('#installBtn').hidden=true;toast('Đã cài XSKT2')});
-if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(console.warn));
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(console.warn));
 
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){invalidateHistory();if(['today','stats'].includes(state.screen))renderActive();}});
+window.addEventListener('online',()=>{invalidateHistory();renderActive()});
 initSelects();syncNav();syncControls();renderActive();

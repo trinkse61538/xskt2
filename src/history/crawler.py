@@ -1,6 +1,7 @@
 from __future__ import annotations
 import hashlib,re,unicodedata
 from datetime import date
+from .integrity import EXPECTED as PRIZE_SCHEMA
 import requests
 from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
@@ -40,7 +41,7 @@ def parse_sequence(text,nstations):
             if i>=len(toks) or (toks[i].upper()!="DB" if lab=="DB" else toks[i]!=lab):good=False;break
             i+=1; need=EXPECTED[key]*nstations; vals=[]
             while i<len(toks) and len(vals)<need:
-                if toks[i].isdigit() and 2<=len(toks[i])<=6: vals.append(toks[i]); i+=1
+                if toks[i].isdigit() and len(toks[i])==PRIZE_SCHEMA[key][1]: vals.append(toks[i]); i+=1
                 else:good=False;break
             if not good or len(vals)!=need:good=False;break
             rows[key]=vals

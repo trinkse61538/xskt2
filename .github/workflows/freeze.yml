@@ -1,0 +1,27 @@
+name: Freeze Universal daily record
+on:
+  schedule:
+    - cron: '15 0 * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: xskt2-history
+  cancel-in-progress: false
+jobs:
+  freeze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python scripts/freeze_predictions.py
+      - run: |
+          git config user.name 'xskt2-ledger-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add data/ledger/
+          if ! git diff --cached --quiet; then
+            git commit -m 'ledger: freeze Universal before draw'
+            git pull --rebase origin main
+            git push origin main
+          fi

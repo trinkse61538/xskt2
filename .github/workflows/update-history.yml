@@ -1,9 +1,7 @@
 name: Update XSMN History
 on:
   schedule:
-    # GitHub cron is UTC: 09:50 = 16:50 Vietnam; 10:10 = 17:10 Vietnam.
-    - cron: "50 9 * * *"
-    - cron: "10 10 * * *"
+    - cron: '20 10,13,18,23 * * *'
   workflow_dispatch:
 permissions:
   contents: write
@@ -16,25 +14,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: {python-version: "3.12"}
+        with: {python-version: '3.12'}
       - run: pip install -r requirements.txt
-      - name: Fetch complete draw only
+      - name: Fetch completed days and repair gaps
+        id: crawl
+        continue-on-error: true
         run: python scripts/update_history.py
-      - name: Rebuild history stats
-        if: success()
+      - name: Build and verify derived data
+        id: derive
+        continue-on-error: true
         run: |
+          set -e
           python scripts/rebuild_stats.py
-          python scripts/score_results.py || true
-      - name: Commit data changes
-        if: success()
+          python scripts/score_results.py
+      - name: Commit validated progress and diagnostics
+        if: always() && steps.derive.outcome == 'success'
         run: |
-          git config user.name "xskt2-history-bot"
-          git config user.email "actions@users.noreply.github.com"
+          git config user.name 'xskt2-history-bot'
+          git config user.email 'actions@users.noreply.github.com'
           git add data/history/
-          if git diff --cached --quiet; then
-            echo "No data changes"
-          else
-            git commit -m "data: update XSMN history"
+          if ! git diff --cached --quiet; then
+            git commit -m 'data: update validated XSMN history'
             git pull --rebase origin main
             git push origin main
           fi
+      - name: Surface incomplete updates
+        if: always() && (steps.crawl.outcome != 'success' || steps.derive.outcome != 'success')
+        run: exit 1
+      - name: Verify rejected-record count
+        if: always() && steps.derive.outcome == 'success'
+        run: python -c "import json,sys; sys.exit(bool(json.load(open('data/history/derived/health.json'))['invalid']))"

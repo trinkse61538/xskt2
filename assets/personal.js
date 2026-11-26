@@ -1,3 +1,4 @@
+import {baziIndices} from './bazi-calendar-v2.js';
 const DIGIT_ELEMENT={0:'earth',1:'water',2:'fire',3:'wood',4:'metal',5:'earth',6:'water',7:'fire',8:'wood',9:'metal'};
 const ELEMENT_VI={wood:'Mộc',fire:'Hỏa',earth:'Thổ',metal:'Kim',water:'Thủy'};
 const STEMS_EL=['wood','wood','fire','fire','earth','earth','metal','metal','water','water'];
@@ -18,9 +19,9 @@ export function clearProfile(){localStorage.removeItem('xskt2.profile');}
 
 export function analyzeProfile(profile){
   if(!profile?.birthDate) return null;
-  const bt=profile.birthTime||'12:00',h=Number(bt.split(':')[0]||12),di=dayIdx(profile.birthDate),yi=yearIdx(profile.birthDate),m=Number(profile.birthDate.slice(5,7));
-  const mb=monthBranch(m),yb=((yi%12)+12)%12,ds=((di%10)+10)%10,db=((di%12)+12)%12,hb=hourBranch(h),hs=((ds%5)*2+hb)%10;
-  const pillars=[[((yi%10)+10)%10,yb,1],[((((yi%10)+10)%10)%5*2+2+m-1)%10,mb,2],[ds,db,2],[hs,hb,1]];
+  const bt=profile.birthTime||'12:00';
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(profile.birthDate)||Number(profile.birthDate.slice(0,4))<1900||Number(profile.birthDate.slice(0,4))>2100)return null;
+  const pillars=baziIndices(profile.birthDate,bt);
   const counts={wood:0,fire:0,earth:0,metal:0,water:0}; let total=0;
   pillars.forEach(([s,b,w])=>{counts[STEMS_EL[s]]+=w;counts[BRANCHES_EL[b]]+=w;total+=2*w});
   const distribution={},deficit={};let max=0;
@@ -34,7 +35,7 @@ export function personalRanking(record,profile){
   const ranking=record.universal.ranking.slice(0,20).map(r=>{
     const els=[digitElement(r.number[0]),digitElement(r.number[1])];
     const personalComponent=((a.affinity[els[0]]+a.affinity[els[1]])/2+1)/2*100;
-    return {number:r.number,uRank:r.rank,uScore:r.score,agreement:r.agreement,personalComponent,score:.8*r.score+.2*personalComponent,elements:els};
+    return {number:r.number,uRank:r.rank,uScore:r.score,agreement:r.agreement,personalComponent,score:Math.round((.8*r.score+.2*personalComponent)*1000)/1000,elements:els};
   }).sort((a,b)=>b.score-a.score||a.uRank-b.uRank||Number(a.number)-Number(b.number)).map((x,i)=>({...x,rank:i+1}));
   return {primary:ranking[0]?.number,secondary:ranking[1]?.number,top5:ranking.slice(0,5).map(x=>x.number),ranking,analysis:a};
 }
