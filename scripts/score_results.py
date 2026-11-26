@@ -5,11 +5,14 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT))
 from src.history.stats import score_picks
 from src.history.integrity import validate_day,atomic_json
+from src.history.v3 import read_day
 
 def main():
-    cache={};out=[]
+    cache={};out=[];target=json.loads((ROOT/'data/history/derived/health.json').read_text())['expectedThrough']
     for p in sorted((ROOT/'data/history/raw').glob('*.json')):
-        try:d=validate_day(json.loads(p.read_text(encoding='utf-8')))
+        try:
+            d=read_day(p)
+            if d['date']!=p.stem or d['date']>target:raise ValueError('date mismatch/future draw')
         except Exception:continue
         y=d['date'][:4]
         if y not in cache:

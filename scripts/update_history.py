@@ -5,7 +5,8 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT))
 from src.history.integrity import atomic_json,validate_day,days
-from src.history.crawler import fetch_day,NoDraw,http_session
+from src.history.crawler import NoDraw,http_session
+from src.history.v3 import fetch_pair
 RAW=ROOT/'data/history/raw';FAIL=ROOT/'data/history/failures'
 def target_date(now):return now.date() if (now.hour,now.minute)>=(17,10) else now.date()-timedelta(days=1)
 def main():
@@ -22,7 +23,9 @@ def main():
     for d in order[:max(0,a.limit)]:
         k=d.isoformat();p=RAW/f'{k}.json';err=FAIL/f'{k}-failure.json';nd=FAIL/f'{k}-nodraw.json'
         try:
-            obj=validate_day({'date':k,'draws':fetch_day(d,session)});atomic_json(p,obj);err.unlink(missing_ok=True);nd.unlink(missing_ok=True);print('Saved',k,len(obj['draws']))
+            a,b=fetch_pair(d,session);obj=a['day']
+            for row in obj['draws']:row['verification']={'sources':[a['source'],b['source']],'method':'named-station full value match'}
+            obj=validate_day(obj);atomic_json(p,obj);err.unlink(missing_ok=True);nd.unlink(missing_ok=True);print('Saved',k,len(obj['draws']))
         except NoDraw as e:
             # Source text alone is not independent evidence; keep retryable status.
             atomic_json(err,{'date':k,'status':'NO_DRAW_UNVERIFIED','error':str(e)});errors.append(k)

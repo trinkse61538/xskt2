@@ -6,6 +6,7 @@ from pathlib import Path
 from datetime import date
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT))
 from src.history.integrity import validate_day,atomic_json
+from src.history.v3 import read_day
 from src.universal.engine import build_day,assign_month_ranks
 from src.history.stats import score_picks,theoretical_baseline
 
@@ -31,9 +32,12 @@ def evaluate(picks,draws):
     score=score_picks(picks,draws);return {'win':score['win'],'nhay':score['total_nhay'],'baseline':theoretical_baseline(len(set(picks)),sum(len(x['tails']) for x in draws))}
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('--start',default='2005-10-01');ap.add_argument('--end',default='2050-12-31');ap.add_argument('--legacy-js',type=Path);a=ap.parse_args();legacy=legacy_load(a.legacy_js);raw=[];cache={};skipped=[]
+    health=json.loads((ROOT/'data/history/derived/health.json').read_text(encoding='utf-8'))
     for p in sorted((ROOT/'data/history/raw').glob('*.json')):
-        if not a.start<=p.stem<=a.end:continue
-        try:d=validate_day(json.loads(p.read_text(encoding='utf-8')))
+        if not a.start<=p.stem<=min(a.end,health['expectedThrough']):continue
+        try:
+            d=read_day(p)
+            if d['date']!=p.stem:raise ValueError('date mismatch')
         except Exception as e:skipped.append({'date':p.stem,'reason':str(e)});continue
         raw.append(d)
     # Use published calendar unchanged when available; regenerate pre-2026 dates from frozen source only.
@@ -53,6 +57,6 @@ def main():
     for scope,v in paired.items():
         u=[x[0] for x in v];l=[x[1] for x in v];comparisons.append({'scope':scope,'universal':summarize(u),'legacy':summarize(l),'universalOnly':sum(a['win'] and not b['win'] for a,b in v),'legacyOnly':sum(b['win'] and not a['win'] for a,b in v)})
     rolling_summary={scope:[{'date':v[i]['date'],**summarize(v[max(0,i-89):i+1])} for i in range(len(v)) if i>=89 and (i%30==0 or i==len(v)-1)] for scope,v in rolling.items()}
-    manifest={'schema':2,'engine':'universal-v1.0','first':raw[0]['date'] if raw else None,'last':raw[-1]['date'] if raw else None,'totalDays':len(raw),'skipped':skipped,'metrics':results,'matchedLegacy':comparisons,'rolling90DrawDays':rolling_summary,'monthly':[{'month':k[0],'scope':k[1],**summarize(v)} for k,v in sorted(by_month.items())],'limitations':['All results are retrospective unless independently timestamped before draw. Holdout label refers to date split, not proof of untouched data.','Wilson intervals describe day-level hit counts under independence; temporal dependence and multiple comparisons are not adjusted.','Uniform independent-tail null is theoretical, not a payout or profit model.','Legacy comparison is limited to overlapping published calendar dates. Personal is evaluated locally in the browser; no birth data exported.']}
+    manifest={'schema':3,'revision':health['revision'],'engine':'universal-v1.0','first':raw[0]['date'] if raw else None,'last':raw[-1]['date'] if raw else None,'totalDays':len(raw),'skipped':skipped,'metrics':results,'matchedLegacy':comparisons,'rolling90DrawDays':rolling_summary,'monthly':[{'month':k[0],'scope':k[1],**summarize(v)} for k,v in sorted(by_month.items())],'limitations':['All results are retrospective unless independently timestamped before draw. Holdout label refers to date split, not proof of untouched data.','Wilson intervals describe day-level hit counts under independence; temporal dependence and multiple comparisons are not adjusted.','Uniform independent-tail null is theoretical, not a payout or profit model.','Legacy comparison is limited to overlapping published calendar dates. Personal is evaluated locally in the browser; no birth data exported.']}
     atomic_json(ROOT/'data/backtest/backtest-summary.json',manifest);print('Backtest',len(raw),'days; skipped',len(skipped),'matched scopes',len(comparisons))
 if __name__=='__main__':main()
