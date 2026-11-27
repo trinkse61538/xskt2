@@ -39,8 +39,11 @@ def test_routes_and_legacy_aliases():
     assert "if(e.target.closest('.back-more')){showMoreMenu();return;}" in app
 
 def test_version_and_cache():
-    assert json.loads((ROOT/'package.json').read_text())['version']=='3.9.5'
+    version=json.loads((ROOT/'package.json').read_text())['version']
+    assert re.fullmatch(r'\d+\.\d+\.\d+',version)
     html=(ROOT/'index.html').read_text();sw=(ROOT/'sw.js').read_text()
-    for x in ['./assets/app.js?v=3.9.5','./assets/style.css?v=3.9.5']:
+    assert f'XSKT2 V{version}' in html
+    for x in [f'./assets/app.js?v={version}',f'./assets/style.css?v={version}',f'./assets/personal-v310.css?v={version}']:
         assert x in html and x in sw
-    assert 'xskt2-v3.9.5' in sw
+    assert f"CACHE='xskt2-v{version}'" in sw
+    assert f'./assets/personal-research-v310.js?v={version}' in sw

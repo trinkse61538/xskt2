@@ -1,5 +1,5 @@
-import {loadArchiveYear,archiveDetails,archiveSummary,archiveQualityHTML} from './archive-v394.js?v=3.9.5';
-import {dayStations,matchesDay,stationsHTML,historyDetails,historyMonthSummary} from './all-days-v36.js?v=3.9.5';
+import {loadArchiveYear,archiveDetails,archiveSummary,archiveQualityHTML} from './archive-v394.js?v=3.10.0';
+import {dayStations,matchesDay,stationsHTML,historyDetails,historyMonthSummary} from './all-days-v36.js?v=3.10.0';
 import {enrichResearch} from './research-v2.js';
 import {renderStationPanel,scopedDraws,stationResults} from './station-v31.js';
 import {healthPanel,statsBounds,renderAboutV2} from './health-v2.js';
@@ -7,8 +7,9 @@ import {loadHealth,completedISO} from './data.js';
 import {loadMonthlyDays,monthlyResult,monthlySummary} from './monthly-v32.js?v=3.5.0';
 import {loadRecord,loadBestDays,loadMonth,loadRange,loadYear,loadHistoryIndex,loadResearch,historyDay,fmtDate,monthLabel,firstOfMonth,shiftMonth,daysInMonth,weekdayMon0,addDays,MIN_DATE,MAX_DATE,pct,esc,money,parseISO} from './data.js';
 import {readProfile,analyzeProfile,personalRanking,picksFor,elementLabel} from './personal.js';
+import {personalCore,compareRankings,pairedSummary} from './personal-research-v310.js?v=3.10.0';
 import {scorePicks,theoreticalTwoPickBaseline,stationMatch,stationsForDate,stationHistory,uniqueHitRate,numberTable,anomalyFor,anomalyLabel,matchSummaryText,BASELINE_TWO_18} from './history.js';
-import {renderGuideV35} from './guide-v35.js?v=3.9.5';
+import {renderGuideV35} from './guide-v35.js?v=3.10.0';
 
 function modeSwitch(state,profile){return `<div class="mode-switch"><button data-action="mode" data-mode="universal" class="${state.mode==='universal'?'active':''}">🌤 Thiên thời</button><button data-action="mode" data-mode="personal" class="${state.mode==='personal'?'active':''}">👤 Cá nhân${profile?'':' · chưa có hồ sơ'}</button></div>`}
 function tierClass(t){return `tier-${String(t||'C').toLowerCase()}`}
@@ -45,9 +46,22 @@ export async function renderToday(ctx){
   }catch(e){host.innerHTML=`<div class="error-card"><b>Không tải được ngày</b><span>${esc(e.message)}</span></div>`}
 }
 
+function personalKpis(items){return `<div class="personal-v310-kpis">${items.map(([label,value])=>`<div><span>${esc(label)}</span><b>${esc(String(value))}</b></div>`).join('')}</div>`;}
+const signedPoint=x=>`${x>=0?'+':''}${x.toFixed(2)}`;
 function differenceBlock(r,p){
-  const uTop=r.universal.ranking.slice(0,5),map=new Map(p.ranking.map(x=>[x.number,x]));
-  return `<div class="difference-grid">${uTop.map(u=>{const x=map.get(u.number);if(!x)return'';const delta=u.rank-x.rank;return `<div><span>${esc(u.number)}</span><b>Universal #${u.rank} → Personal #${x.rank}</b><small>${delta>0?`Boost +${delta} hạng`:delta<0?`Penalty ${delta} hạng`:'Giữ nguyên'} · overlay ${x.personalComponent.toFixed(1)}/100</small></div>`}).join('')}</div>`;
+  const c=compareRankings(r.universal,p);if(!c)return '<p class="helper">Không đủ dữ liệu để so sánh.</p>';
+  const core=personalCore(p.analysis.affinity),groups=new Set(core.map(x=>x.score.toFixed(6))).size;
+  return `${personalKpis([['Trùng Top 1',c.top1+'/1'],['Trùng Top 2',c.top2+'/2'],['Trùng Top 5',c.top5+'/5']])}
+  <p class="personal-v310-note">${c.top2===2?'Hai mô hình có cùng tập Top 2.':'Hai mô hình có tập Top 2 khác nhau.'} Điểm Personal = 80% Universal + 20% điểm hồ sơ. Điểm hồ sơ được tính riêng cho 00–99 (${core.length} số, ${groups} nhóm điểm phân biệt); kết quả kết hợp vẫn giới hạn trong Universal Top 20. Không ép đổi hạng.</p>
+  <div class="personal-v310-scroll"><table class="personal-v310-table"><thead><tr><th>Số / hành</th><th>U hạng</th><th>P hạng</th><th>U điểm</th><th>Hồ sơ</th><th>P điểm</th><th>Δ điểm</th></tr></thead><tbody>${c.rows.map(x=>`<tr><td><b>${esc(x.number)}</b><small>${esc(x.elements.map(elementLabel).join(' · '))}</small></td><td>#${x.uRank}</td><td>#${x.pRank}<small>${x.rankDelta===0?'Giữ':x.rankDelta>0?'↑'+x.rankDelta:'↓'+(-x.rankDelta)}</small></td><td>${x.uScore.toFixed(2)}</td><td>${x.overlay.toFixed(2)}</td><td>${x.pScore.toFixed(2)}</td><td>${signedPoint(x.scoreDelta)}</td></tr>`).join('')}</tbody></table></div>
+  <p class="personal-v310-note">Bảng gồm hợp của hai Top 5. Các số có cùng cặp ngũ hành (kể cả số đảo) có cùng điểm hồ sơ. Điểm không phải xác suất xuất hiện. Hồ sơ sử dụng phân bố ngũ hành đơn giản, chưa phải phân tích Bát Tự đầy đủ.</p>`;
+}
+function pairedPanel(rows){
+  const p=pairedSummary(rows);if(!p.n)return '<p class="helper">Chưa có mẫu ghép cặp Personal hợp lệ. Tạo hồ sơ để đối chiếu trên thiết bị.</p>';
+  const rate=n=>pct(n/p.n,2);
+  return `<section class="card"><div class="card-head"><div><span>PERSONAL RESEARCH · V2</span><h3>Đối chiếu ghép cặp · ${p.n} ngày</h3></div></div>
+  ${personalKpis([['Universal',rate(p.uWins)],['Personal',rate(p.pWins)],['Ngẫu nhiên (lý thuyết)',pct(p.baseline,2)],['Trùng Top 1',rate(p.top1)],['Trùng cả Top 2',rate(p.top2)],['Trùng cả Top 5',rate(p.top5)],['Chỉ Universal WIN',p.onlyU],['Chỉ Personal WIN',p.onlyP],['Cả hai WIN',p.both],['Cả hai MISS',p.neither],['Trùng trung bình Top 2',(p.shared2/p.n).toFixed(2)+'/2'],['Trùng trung bình Top 5',(p.shared5/p.n).toFixed(2)+'/5']])}
+  <p class="personal-v310-note">Chênh lệch Personal − Universal trên cùng mẫu: ${signedPoint(p.lift*100)} điểm %. Trùng Top 2/5 là trùng tập số, không yêu cầu cùng thứ tự. Mẫu bỏ qua ngày thiếu dữ liệu hoặc thiếu hồ sơ. Đây là đối chiếu hồi cứu, không phải dự báo trước kỳ hay bằng chứng lợi thế. Hồ sơ lưu và xử lý tại thiết bị.</p></section>`;
 }
 
 export async function renderBest(ctx){
@@ -91,8 +105,10 @@ export async function renderStats(ctx){
   $('#statsFreshness').innerHTML=`<div class="freshness">${esc(scopeLabel)} · ${rows.length} ngày/kỳ đủ dữ liệu được chấm · ${esc(coverage)}. Ngày đài không mở hoặc thiếu dữ liệu không tính MISS.</div>`;
   if(!rows.length){$('#statsKpis').innerHTML='<div class="empty-state">Không có kỳ hợp lệ theo phạm vi.</div>';$('#statsBaseline').innerHTML='';$('#statsDays').innerHTML='';return;}
   const uWins=rows.filter(x=>x.ur.win).length,pRows=rows.filter(x=>x.pr),pWins=pRows.filter(x=>x.pr.win).length,uRate=uWins/(rows.length||1),pRate=pRows.length?pWins/pRows.length:null,baseline=rows.reduce((s,x)=>s+x.baseline,0)/(rows.length||1),uNhay=rows.reduce((s,x)=>s+x.ur.totalNhay,0),pNhay=pRows.reduce((s,x)=>s+x.pr.totalNhay,0);
-  $('#statsKpis').innerHTML=`<div class="kpi primary"><span>Universal Chủ 1+2</span><b>${pct(uRate)}</b><small>${uWins}/${rows.length} WIN · ${uNhay} nháy</small></div><div class="kpi personal"><span>Personal Chủ 1+2</span><b>${pRate===null?'—':pct(pRate)}</b><small>${pRate===null?'Tạo profile để chấm':`${pWins}/${pRows.length} WIN · ${pNhay} nháy`}</small></div><div class="kpi"><span>Random baseline</span><b>${pct(baseline)}</b><small>Lý thuyết · theo số tails/scope</small></div><div class="kpi"><span>Personal lift</span><b>${pRate===null?'—':`${pRate-uRate>=0?'+':''}${((pRate-uRate)*100).toFixed(1)}đ%`}</b><small>Personal − Universal</small></div>`;
+  const pairedURate=pRows.length?pRows.filter(x=>x.ur.win).length/pRows.length:0;
+  $('#statsKpis').innerHTML=`<div class="kpi primary"><span>Universal Chủ 1+2</span><b>${pct(uRate)}</b><small>${uWins}/${rows.length} WIN · ${uNhay} nháy</small></div><div class="kpi personal"><span>Personal Chủ 1+2</span><b>${pRate===null?'—':pct(pRate)}</b><small>${pRate===null?'Tạo profile để chấm':`${pWins}/${pRows.length} WIN · ${pNhay} nháy`}</small></div><div class="kpi"><span>Random baseline</span><b>${pct(baseline)}</b><small>Lý thuyết · theo số tails/scope</small></div><div class="kpi"><span>Personal lift</span><b>${pRate===null?'—':`${pRate-pairedURate>=0?'+':''}${((pRate-pairedURate)*100).toFixed(1)}đ%`}</b><small>Personal − Universal</small></div>`;
   $('#statsBaseline').innerHTML=`<div class="baseline-card"><b>Delta Universal vs baseline: ${(uRate-baseline)>=0?'+':''}${((uRate-baseline)*100).toFixed(1)} điểm %</b><span>${scope!=='any'?`Baseline 2 số / 18 kết quả ≈ ${pct(BASELINE_TWO_18,2)}.`:'Tất cả đài dùng baseline lý thuyết theo tổng số kết quả thực tế từng ngày.'} Đây không phải predictive probability.</span></div>`;
+  $('#statsBaseline').insertAdjacentHTML('beforeend',pairedPanel(rows));
   const filtered=rows.filter(x=>state.statsFilter==='ALL'||(state.statsFilter==='WIN'?x.ur.win:!x.ur.win)).reverse();
   $('#statsDays').innerHTML=filtered.slice(0,120).map(x=>`<button class="stats-day ${x.ur.win?'win':'miss'}" data-action="open-date" data-date="${x.date}" data-follow-station="${esc(scope==='any'?'all':x.draws[0].station)}"><div><span>${fmtDate(x.date)} · ${esc(scope==='any'?'Tất cả đài':x.draws[0].station)}</span><b>${x.up.join(' · ')}</b><small>${x.ur.hitNumbers.length?`Hit ${x.ur.hitNumbers.join(', ')} · ${x.ur.totalNhay} nháy · ${esc(stationResults(x.up,x.draws.map(d=>d.station),x.draws).filter(t=>t.result?.win).map(t=>t.station).join(', '))}`:'Không xuất hiện'}</small></div><strong>${x.ur.win?'WIN':'MISS'}</strong>${x.pr?`<em>Personal ${x.pr.win?'WIN':'MISS'}</em>`:''}</button>`).join('')||'<div class="empty-note">Không có ngày theo bộ lọc.</div>';
 }
@@ -138,14 +154,14 @@ export async function renderAll(ctx){
 
 export function renderProfile(ctx){
   const {$}=ctx,p=readProfile();$('#profileLabel').value=p?.label||'';$('#birthDate').value=p?.birthDate||'';$('#birthTime').value=p?.birthTime||'12:00';$('#birthPlace').value=p?.birthPlace||'';const a=analyzeProfile(p);
-  $('#profileAnalysis').innerHTML=!a?'<div class="empty-state"><b>Chưa có hồ sơ</b><span>Personal chỉ hoạt động khi có ngày sinh. Hồ sơ được lưu local trên trình duyệt này.</span></div>':`<div class="card"><div class="card-head"><div><span>ELEMENT BALANCE</span><h3>${esc(p.label||'Hồ sơ Personal')}</h3></div></div><div class="element-bars">${Object.entries(a.distribution).map(([e,v])=>`<div><span>${elementLabel(e)}</span><i><em style="width:${Math.round(v*100)}%"></em></i><b>${Math.round(v*100)}%</b></div>`).join('')}</div><p class="helper">Personal V1.1 dùng element-balance overlay để rerank Universal Top 20 với trọng số 80% Universal + 20% Personal. Tên/nơi sinh không tạo số.</p></div>`;
+  $('#profileAnalysis').innerHTML=!a?'<div class="empty-state"><b>Chưa có hồ sơ</b><span>Personal chỉ hoạt động khi có ngày sinh. Hồ sơ được lưu local trên trình duyệt này.</span></div>':`<div class="card"><div class="card-head"><div><span>ELEMENT BALANCE</span><h3>${esc(p.label||'Hồ sơ Personal')}</h3></div></div><div class="element-bars">${Object.entries(a.distribution).map(([e,v])=>`<div><span>${elementLabel(e)}</span><i><em style="width:${Math.round(v*100)}%"></em></i><b>${Math.round(v*100)}%</b></div>`).join('')}</div><p class="helper">Personal V2 Research: điểm hồ sơ tách riêng trên 00–99; công thức kết hợp V1.1 vẫn giữ 80% Universal + 20% hồ sơ, trong Top 20. Tên/nơi sinh không tạo số.</p></div>`;
 }
 
 export function renderMethod(ctx){ctx.$('#methodContent').innerHTML=`
   <div class="method-section"><h3>1. Luồng bắt buộc</h3><div class="flow-card"><b>Universal Core</b><i>↓</i><b>Universal 00–99 Ranking</b><i>↓</i><b>Personal Overlay</b><i>↓</i><b>Personal Ranking</b></div><p>Universal tuyệt đối không dùng ngày sinh, tên, giới tính hay kết quả XSMN. Personal chỉ rerank Universal.</p></div>
   <div class="method-section"><h3>2. Universal V1</h3><div class="weight-list"><div><span>Seasonal Qi / Ngũ hành khí</span><b>30%</b></div><div><span>Can Chi Relations</span><b>20%</b></div><div><span>12 Trực + Nạp âm</span><b>15%</b></div><div><span>Kinh Dịch</span><b>25%</b></div><div><span>Hà Đồ / Lạc Thư</span><b>10%</b></div></div><div class="method-note"><b>Digit mapping</b><span>Thủy 1·6 · Hỏa 2·7 · Mộc 3·8 · Kim 4·9 · Thổ 0·5.</span></div></div>
   <div class="method-section"><h3>3. Score / Agreement / Tier</h3><p><b>Score 78/100 không có nghĩa 78% khả năng trúng.</b> Score là ranking/coherence. Agreement đếm số module cùng support. Tier dùng để rank chất lượng ngày.</p></div>
-  <div class="method-section"><h3>4. Personal V1.1</h3><div class="formula-card">Final Personal Score = <b>80% Universal</b> + <b>20% Personal Overlay</b></div><p>Candidate pool chỉ lấy Universal Top 20; Personal không được dựng một engine số riêng hoàn toàn.</p></div>
+  <div class="method-section"><h3>4. Personal Research V2 · công thức V1.1</h3><div class="formula-card">Final Personal Score = <b>80% Universal</b> + <b>20% Personal Overlay</b></div><p>Điểm hồ sơ tính riêng trên 100 số. Candidate pool kết hợp vẫn lấy Universal Top 20. So sánh ghép cặp và độ trùng ở Thống kê. Không đổi trọng số khi chưa kiểm định độc lập.</p></div>
   <div class="method-section"><h3>5. History integrity</h3><div class="flow-card"><b>Core Prediction</b><i>→</i><b>Station Match</b><i>→</i><b>Recent Form</b><i>→</i><b>Anomaly Watch</b></div><p>Các lớp sau chỉ đối chiếu/research/cảnh báo, không sửa Chủ 1/Chủ 2 đã freeze. Duplicate tails được giữ để đếm nháy.</p></div>
   <div class="method-section"><h3>6. Backtest</h3><div class="formula-card"><b>SPECIFY → FREEZE → TEST</b></div><p>2005–2018 Development · 2019–2022 Validation · 2023–2025 Holdout · 2026+ hồi cứu / forward khi có ledger trước kỳ. Nếu đổi công thức sau holdout phải bump version.</p></div>`}
 

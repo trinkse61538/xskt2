@@ -1,4 +1,5 @@
 import {baziIndices} from './bazi-calendar-v2.js';
+import {coreScore} from './personal-research-v310.js?v=3.10.0';
 const DIGIT_ELEMENT={0:'earth',1:'water',2:'fire',3:'wood',4:'metal',5:'earth',6:'water',7:'fire',8:'wood',9:'metal'};
 const ELEMENT_VI={wood:'Mộc',fire:'Hỏa',earth:'Thổ',metal:'Kim',water:'Thủy'};
 const STEMS_EL=['wood','wood','fire','fire','earth','earth','metal','metal','water','water'];
@@ -33,8 +34,8 @@ export function analyzeProfile(profile){
 export function personalRanking(record,profile){
   const a=analyzeProfile(profile); if(!a||!record?.universal?.ranking) return null;
   const ranking=record.universal.ranking.slice(0,20).map(r=>{
-    const els=[digitElement(r.number[0]),digitElement(r.number[1])];
-    const personalComponent=((a.affinity[els[0]]+a.affinity[els[1]])/2+1)/2*100;
+    const core=coreScore(r.number,a.affinity);
+    const els=core.elements,personalComponent=core.score;
     return {number:r.number,uRank:r.rank,uScore:r.score,agreement:r.agreement,personalComponent,score:Math.round((.8*r.score+.2*personalComponent)*1000)/1000,elements:els};
   }).sort((a,b)=>b.score-a.score||a.uRank-b.uRank||Number(a.number)-Number(b.number)).map((x,i)=>({...x,rank:i+1}));
   return {primary:ranking[0]?.number,secondary:ranking[1]?.number,top5:ranking.slice(0,5).map(x=>x.number),ranking,analysis:a};
