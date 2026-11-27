@@ -1,6 +1,6 @@
 const yearCache=new Map(),recordCache=new Map(),historyCache=new Map(),stationCache=new Map();
 let healthPromise;
-export const MIN_DATE='2008-01-01',MAX_DATE='2050-12-31';
+export const MIN_DATE='2005-01-01',MAX_DATE='2050-12-31';
 export const VN_MONTHS=Array.from({length:12},(_,i)=>`Tháng ${i+1}`);
 export const pad=n=>String(n).padStart(2,'0');
 export function localISO(d=new Date()){return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`}

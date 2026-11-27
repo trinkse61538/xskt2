@@ -1,4 +1,4 @@
-import {initLookupDate} from './lookup-date-v382.js?v=3.9.0';
+import {initLookupDate} from './lookup-date-v382.js?v=3.9.3';
 // Historical two-digit result lookup only. No prediction or betting calculations.
 import {loadHistoryIndex,invalidateHistory,vnISO,fmtDate,esc,addDays} from './data.js';
 import {stationsForDate} from './history.js';
