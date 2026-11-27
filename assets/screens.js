@@ -1,4 +1,4 @@
-import {dayStations,matchesDay,stationsHTML} from './all-days-v36.js?v=3.6.0';
+import {dayStations,matchesDay,stationsHTML,historyDetails,historyMonthSummary} from './all-days-v36.js?v=3.9.0';
 import {enrichResearch} from './research-v2.js';
 import {renderStationPanel,scopedDraws,stationResults} from './station-v31.js';
 import {healthPanel,statsBounds,renderAboutV2} from './health-v2.js';
@@ -124,9 +124,10 @@ export async function renderAll(ctx){
     const [calendar,hist]=await Promise.all([loadYear(year),loadHistoryIndex(start).catch(()=>({dates:{},unavailable:true}))]);
     if(ctx.allRequest!==req)return;
     const rows=calendar.filter(r=>Number(r.date.slice(5,7))===month).sort((a,b)=>a.date.localeCompare(b.date)),profile=readProfile(),completed=completedISO();
-    const items=rows.map(r=>({r,picks:picksFor(r,mode,profile)})).filter(({r,picks})=>(tier==='ALL'||r.universal.tier===tier)&&matchesDay(r,picks,q));
-    summary.textContent=`${items.length}/${rows.length} ngày · ${tier==='ALL'?'mọi Tier':`Tier ${tier}`} · ${items.some(x=>x.picks.personal)?'Personal':'Universal'} · Đài 1 = đài đầu theo lịch, không phải xác suất cao hơn.`;
-    host.innerHTML=items.map(({r,picks})=>dayCard(r,picks,stationsHTML(dayStations(r.date,[picks.primary,picks.secondary],hist,completed)))).join('')||'<div class="empty-note">Không có ngày phù hợp.</div>';
+    const items=rows.map(r=>({r,picks:picksFor(r,mode,profile)})).filter(({r,picks})=>(tier==='ALL'||r.universal.tier===tier)&&matchesDay(r,picks,q,dayStations(r.date,[picks.primary,picks.secondary],hist,completed).map(x=>x.station)));
+    const coverage=historyMonthSummary(rows,hist,completed);
+    summary.textContent=`${items.length}/${rows.length} ngày · ${tier==='ALL'?'mọi Tier':`Tier ${tier}`} · ${items.some(x=>x.picks.personal)?'Personal':'Universal'} · ${hist.unavailable?'Không tải được kết quả':`${coverage.available} ngày có bản ghi · ${coverage.missing} thiếu · ${coverage.pending} chờ`} · ${year<2026?'Lịch tái tạo hồi cứu; thứ tự đài theo bản ghi nếu có.':'Đài 1 = đài đầu theo lịch, không phải xác suất cao hơn.'}`;
+    host.innerHTML=items.map(({r,picks})=>{const nums=[picks.primary,picks.secondary];return `<article class="h39-day">${dayCard(r,picks,stationsHTML(dayStations(r.date,nums,hist,completed)))}${historyDetails(r.date,nums,hist,completed)}</article>`}).join('')||'<div class="empty-note">Không có ngày phù hợp.</div>';
   }catch(e){if(ctx.allRequest===req)host.innerHTML=`<div class="error-card">${esc(e.message)}</div>`;}
 }
 

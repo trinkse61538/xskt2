@@ -1,6 +1,6 @@
-import {initLookupDate} from './lookup-date-v382.js?v=3.8.2';
+import {initLookupDate} from './lookup-date-v382.js?v=3.9.0';
 // Historical ticket checking only: no prediction, payment or betting integration.
-import {initLookup,validDate} from './lookup-v38.js?v=3.8.2';
+import {initLookup,validDate} from './lookup-v38.js?v=3.9.0';
 import {loadHistoryIndex,invalidateHistory,vnISO,fmtDate,esc,addDays} from './data.js';
 import {stationsForDate} from './history.js';
 export const TICKET_FIRST='2017-01-01';

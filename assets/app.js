@@ -4,9 +4,9 @@ import {XSMN_SCHEDULE} from './history.js';
 import {readChoice,saveChoice,FOLLOW_KEY,STATS_KEY} from './station-v31.js';
 const scopeOptions=['station1','any',...[...new Set(Object.values(XSMN_SCHEDULE).flat())].map(n=>'station:'+n)];
 const storedScope=readChoice(STATS_KEY,'station1');
-import {renderToday,renderBest,renderGuide,renderStats,renderCalendar,renderCompare,renderAll,renderProfile,renderMethod,renderAbout} from './screens.js?v=3.6.0';
+import {renderToday,renderBest,renderGuide,renderStats,renderCalendar,renderCompare,renderAll,renderProfile,renderMethod,renderAbout} from './screens.js?v=3.9.0';
 
-import {initLookupV381} from './lookup-v381.js?v=3.8.2';
+import {initLookupV381} from './lookup-v381.js?v=3.9.0';
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const initial=todayISO(),d=parseISO(initial);
@@ -48,7 +48,7 @@ function setDate(next){state.date=clampDate(next);$('#datePick').value=state.dat
 function initSelects(){
   const choice=$('#statsScopeChoice');for(const v of scopeOptions){const o=document.createElement('option');o.value=v;o.textContent=v==='station1'?'Đài đầu theo lịch':v==='any'?'Tất cả đài':v.slice(8);choice.append(o)}
   choice.addEventListener('change',async()=>{state.statsScope=choice.value;saveChoice(STATS_KEY,choice.value);await renderActive()});
-  $('#allYear').innerHTML=Array.from({length:25},(_,i)=>2026+i).map(y=>`<option value="${y}">${y}</option>`).join('');
+  $('#allYear').innerHTML=Array.from({length:Number(MAX_DATE.slice(0,4))-Number(MIN_DATE.slice(0,4))+1},(_,i)=>Number(MIN_DATE.slice(0,4))+i).map(y=>`<option value="${y}">${y}</option>`).join('');
   $('#allMonth').innerHTML=Array.from({length:12},(_,i)=>`<option value="${i+1}">Tháng ${i+1}</option>`).join('');
 }
 

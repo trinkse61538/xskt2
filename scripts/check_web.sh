@@ -14,5 +14,6 @@ if command -v node >/dev/null 2>&1; then
   node --test tests/lookup-v38.test.mjs
   node --test tests/lookup-v381.test.mjs
   node --test tests/lookup-date-v382.test.mjs
+  node --test tests/history-v390.test.mjs
 fi
 python -m pytest -q
