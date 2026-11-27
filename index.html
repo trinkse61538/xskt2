@@ -9,8 +9,9 @@
   <meta name="apple-mobile-web-app-title" content="XSKT2">
   <meta name="description" content="XSKT2 Universal Core và Personal Overlay: Thiên thời, ngày tốt, thống kê và đối chiếu XSMN.">
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="stylesheet" href="./assets/style.css?v=3.8.0">
-  <link rel="stylesheet" href="./assets/lookup-v38.css?v=3.8.0">
+  <link rel="stylesheet" href="./assets/style.css?v=3.8.1">
+  <link rel="stylesheet" href="./assets/lookup-v38.css?v=3.8.1">
+  <link rel="stylesheet" href="./assets/lookup-v381.css?v=3.8.1">
   <link rel="stylesheet" href="./assets/all-days-v36.css?v=3.6.0">
   <link rel="stylesheet" href="./assets/audit-v2.css">
   <link rel="stylesheet" href="./assets/audit-v3.css">
@@ -24,7 +25,7 @@
 <div id="app">
   <header class="app-header">
     <div class="header-copy">
-      <div class="eyebrow">XSKT2 V3.8 · UNIVERSAL V1.0 · PERSONAL V1.1</div>
+      <div class="eyebrow">XSKT2 V3.8.1 · UNIVERSAL V1.0 · PERSONAL V1.1</div>
       <h1 id="screenTitle">Hôm nay</h1>
     </div>
     <div class="header-actions">
@@ -111,7 +112,20 @@
       </section>
 
     <section id="screen-lookup" class="screen">
-      <div class="method-hero"><div class="method-kicker">KẾT QUẢ XSMN · ĐỐI CHIẾU LỊCH SỬ</div><h2>Dò số theo ngày</h2><p>Nhập số hai chữ số, kiểm tra tất cả đài có dữ liệu của ngày đã chọn.</p></div>
+      <div class="method-hero"><div class="method-kicker">KẾT QUẢ XSMN · ĐỐI CHIẾU LỊCH SỬ</div><h2>Dò số &amp; vé số</h2><p>Đối chiếu kết quả thực tế từng đài; hỗ trợ vé 6 chữ số và 2 số cuối.</p></div>
+      <div class="mode-switch" aria-label="Chế độ dò"><button type="button" data-lookup-mode="ticket" class="active" aria-pressed="true">Vé 6 chữ số</button><button type="button" data-lookup-mode="tail" aria-pressed="false">2 số cuối</button></div>
+      <div id="lookupTicketPanel">
+        <form class="control-card" id="ticketForm">
+          <label class="field"><span>Ngày mở thưởng</span><input id="ticketDate" type="date" min="2017-01-01" required></label>
+          <div class="lookup-actions"><button type="button" id="ticketToday" class="ghost wide-btn">Hôm nay</button><button type="button" id="ticketYesterday" class="ghost wide-btn">Hôm qua</button></div>
+          <label class="field"><span>Số vé (6 chữ số)</span><textarea id="ticketNumbers" placeholder="Ví dụ: 025653, 725654" maxlength="1000" rows="3" autocomplete="off" required></textarea></label>
+          <p class="helper">Nhập tối đa 50 số vé, giữ số 0 đầu. Kiểm tra tất cả đài trong ngày có dữ liệu gốc.</p>
+          <div class="lookup-actions"><button type="submit" class="primary wide-btn">Dò vé</button><button type="button" id="ticketClear" class="ghost wide-btn">Xóa số</button></div>
+        </form>
+        <div class="method-note important"><b>Kiểm tra 11 hạng giải theo cơ cấu vé XSMN 6 chữ số thông dụng</b><span>Đặc biệt: khớp 6/6. Phụ đặc biệt: chỉ sai hàng trăm nghìn. Khuyến khích: chỉ sai một hàng trong 5 số cuối, đúng hàng trăm nghìn. Chỉ là đối chiếu dãy số; vé phải đúng đài phát hành, ngày và thể lệ. Gần khớp không phải tín hiệu dự báo. Dò vé từ 2017; dữ liệu cũ hơn vẫn có thể dò 2 số cuối nếu hợp lệ.</span></div>
+        <div id="ticketResult" aria-live="polite"><div class="empty-state">Chọn ngày, nhập số vé rồi nhấn Dò vé.</div></div>
+      </div>
+      <div id="lookupTailPanel" hidden>
       <form class="control-card" id="lookupForm">
         <label class="field"><span>Ngày cần dò</span><input id="lookupDate" type="date" min="2005-10-01" required></label>
         <div class="lookup-actions"><button type="button" id="lookupToday" class="ghost wide-btn">Hôm nay</button><button type="button" id="lookupYesterday" class="ghost wide-btn">Hôm qua</button></div>
@@ -121,6 +135,7 @@
       </form>
       <div class="method-note warning"><b>Quy ước gần khớp</b><span>Chênh lệch = số đã xổ trừ số cần dò (không tính vòng 99 → 00). Sai chữ số = số vị trí hàng chục/đơn vị khác nhau. Gần khớp không phải trúng và không dự báo kỳ sau.</span></div>
       <div id="lookupResult" aria-live="polite"><div class="empty-state">Chọn ngày, nhập số rồi nhấn Dò kết quả.</div></div>
+      </div>
     </section>
 
     <section id="screen-more" class="screen">
@@ -221,6 +236,6 @@
 </div>
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script type="module" src="./assets/app.js?v=3.8.0"></script>
+<script type="module" src="./assets/app.js?v=3.8.1"></script>
 </body>
 </html>
