@@ -9,7 +9,8 @@
   <meta name="apple-mobile-web-app-title" content="XSKT2">
   <meta name="description" content="XSKT2 Universal Core và Personal Overlay: Thiên thời, ngày tốt, thống kê và đối chiếu XSMN.">
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="stylesheet" href="./assets/style.css?v=3.7.0">
+  <link rel="stylesheet" href="./assets/style.css?v=3.8.0">
+  <link rel="stylesheet" href="./assets/lookup-v38.css?v=3.8.0">
   <link rel="stylesheet" href="./assets/all-days-v36.css?v=3.6.0">
   <link rel="stylesheet" href="./assets/audit-v2.css">
   <link rel="stylesheet" href="./assets/audit-v3.css">
@@ -23,7 +24,7 @@
 <div id="app">
   <header class="app-header">
     <div class="header-copy">
-      <div class="eyebrow">XSKT2 V3.7 · UNIVERSAL V1.0 · PERSONAL V1.1</div>
+      <div class="eyebrow">XSKT2 V3.8 · UNIVERSAL V1.0 · PERSONAL V1.1</div>
       <h1 id="screenTitle">Hôm nay</h1>
     </div>
     <div class="header-actions">
@@ -108,6 +109,19 @@
         <div id="allSummary" class="summary-line"></div>
         <div id="allDays" class="day-list compact-list"></div>
       </section>
+
+    <section id="screen-lookup" class="screen">
+      <div class="method-hero"><div class="method-kicker">KẾT QUẢ XSMN · ĐỐI CHIẾU LỊCH SỬ</div><h2>Dò số theo ngày</h2><p>Nhập số hai chữ số, kiểm tra tất cả đài có dữ liệu của ngày đã chọn.</p></div>
+      <form class="control-card" id="lookupForm">
+        <label class="field"><span>Ngày cần dò</span><input id="lookupDate" type="date" min="2005-10-01" required></label>
+        <div class="lookup-actions"><button type="button" id="lookupToday" class="ghost wide-btn">Hôm nay</button><button type="button" id="lookupYesterday" class="ghost wide-btn">Hôm qua</button></div>
+        <label class="field"><span>Các số cần dò (00–99)</span><textarea id="lookupNumbers" placeholder="Ví dụ: 07, 27, 89" maxlength="1000" rows="3" autocomplete="off" required></textarea></label>
+        <p class="helper">Nhập nhiều số, cách nhau bằng dấu cách, dấu phẩy, chấm phẩy hoặc xuống dòng. Số 7 tự chuẩn hóa thành 07; số trùng chỉ tính một lần.</p>
+        <div class="lookup-actions"><button type="submit" class="primary wide-btn">Dò kết quả</button><button type="button" id="lookupClear" class="ghost wide-btn">Xóa số</button></div>
+      </form>
+      <div class="method-note warning"><b>Quy ước gần khớp</b><span>Chênh lệch = số đã xổ trừ số cần dò (không tính vòng 99 → 00). Sai chữ số = số vị trí hàng chục/đơn vị khác nhau. Gần khớp không phải trúng và không dự báo kỳ sau.</span></div>
+      <div id="lookupResult" aria-live="polite"><div class="empty-state">Chọn ngày, nhập số rồi nhấn Dò kết quả.</div></div>
+    </section>
 
     <section id="screen-more" class="screen">
       <div id="moreMenu" class="more-grid">
@@ -201,11 +215,12 @@
     <button data-screen="best"><span>✦</span><b>Ngày tốt</b></button>
     <button data-screen="guide"><span>◎</span><b>Hướng dẫn</b></button>
     <button data-screen="all"><span>▤</span><b>Tất cả ngày</b></button>
+    <button data-screen="lookup"><span>⌕</span><b>Dò số</b></button>
     <button data-screen="more"><span>•••</span><b>Thêm</b></button>
   </nav>
 </div>
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script type="module" src="./assets/app.js?v=3.7.0"></script>
+<script type="module" src="./assets/app.js?v=3.8.0"></script>
 </body>
 </html>

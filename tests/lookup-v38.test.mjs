@@ -1,0 +1,12 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {parseNumbers,validDate,compareNumber,compareDay,digitDiff} from '../assets/lookup-v38.js';
+const tails=['00','27','27','28','26','37','99','01','45','23','67','89','42','55','12','34','56','78'];
+test('input preserves leading zero, removes duplicates and rejects malformed tokens',()=>{assert.deepEqual(parseNumbers('7, 07; 00\n99'),['07','00','99']);for(const s of ['','100','-2','2.5','abc','1234'])assert.throws(()=>parseNumbers(s));});
+test('date validation and future rejection',()=>{assert(validDate('2024-02-29'));assert(!validDate('2026-02-29'));assert(!validDate('2005-09-30'));assert(!validDate('2026-11-28','2026-11-27'));});
+test('exact matches count duplicate tails',()=>{assert.equal(compareNumber('27',tails).hits,2);assert.deepEqual(compareNumber('27',tails).nearest,[]);});
+test('all closest ties; signed difference and digit mismatch independent',()=>{const r=compareNumber('29',['28','30','30','39']);assert.deepEqual(r.nearest.map(x=>[x.tail,x.delta,x.digits,x.count]),[['28',-1,1,1],['30',1,2,2]]);assert(r.sameDigit.some(x=>x.tail==='39'));assert.equal(digitDiff('09','10'),2);assert.equal(compareNumber('00',['99','01']).nearest[0].tail,'01');});
+test('three scheduled stations, one win, one miss, one missing',()=>{const r=compareDay('2026-11-26',['27'],[{station:'Tây Ninh',tails},{station:'An Giang',tails:Array(18).fill('99')}]);assert.deepEqual(r.stations.map(s=>s.status),['win','miss','missing']);assert.deepEqual([r.available,r.wins,r.misses,r.hits],[2,1,1,2]);});
+test('duplicate station or invalid draw does not count as miss',()=>{const r=compareDay('2026-11-26',['27'],[{station:'Tây Ninh',tails},{station:'Tây Ninh',tails},{station:'An Giang',tails:['27']}]);assert.equal(r.available,0);assert.equal(r.misses,0);});
+test('historical station order follows stored names',()=>{const r=compareDay('2010-11-26',['27'],[{station:'Historical station',tails}]);assert.equal(r.stations.length,1);assert.equal(r.stations[0].station,'Historical station');});
+test('Saturday has four stations',()=>{assert.equal(compareDay('2026-11-28',['00'],[]).stations.length,4);});

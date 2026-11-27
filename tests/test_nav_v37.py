@@ -16,8 +16,8 @@ class Nav(HTMLParser):
 
 def test_menu_order_and_unique_sections():
     h=Nav();h.feed((ROOT/'index.html').read_text(encoding='utf-8'))
-    assert h.order==['today','best','guide','all','more']
-    assert h.ids.count('screen-all')==h.ids.count('more-stats')==1
+    assert h.order==['today','best','guide','all','lookup','more']
+    assert h.ids.count('screen-all')==h.ids.count('more-stats')==h.ids.count('screen-lookup')==1
     assert 'screen-stats' not in h.ids and 'more-all' not in h.ids
     assert 'stats' in h.more and 'all' not in h.more
 
@@ -39,8 +39,8 @@ def test_routes_and_legacy_aliases():
     assert "if(e.target.closest('.back-more')){showMoreMenu();return;}" in app
 
 def test_version_and_cache():
-    assert json.loads((ROOT/'package.json').read_text())['version']=='3.7.0'
+    assert json.loads((ROOT/'package.json').read_text())['version']=='3.8.0'
     html=(ROOT/'index.html').read_text();sw=(ROOT/'sw.js').read_text()
-    for x in ['./assets/app.js?v=3.7.0','./assets/style.css?v=3.7.0']:
+    for x in ['./assets/app.js?v=3.8.0','./assets/style.css?v=3.8.0']:
         assert x in html and x in sw
-    assert 'xskt2-v3.7.0' in sw
+    assert 'xskt2-v3.8.0' in sw

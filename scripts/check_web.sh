@@ -11,5 +11,6 @@ if command -v node >/dev/null 2>&1; then
   node --test tests/guide-v34.test.mjs
   node --test tests/guide-v35.test.mjs
   node --test tests/all-days-v36.test.mjs
+  node --test tests/lookup-v38.test.mjs
 fi
 python -m pytest -q
