@@ -26,3 +26,8 @@
 .day-main .best32-result{font-size:11px;line-height:1.5;max-width:none;white-space:normal;overflow-wrap:anywhere;margin-top:5px}
 .best32-result strong{font-size:10px;font-weight:800}.best32-win{color:#6ee7b7}.best32-miss{color:#fda4af}.best32-pending,.best32-missing,.best32-unavailable{color:#facc88}
 @media(max-width:480px){.best32-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* V3.7: navigation labels stay on one line; hide the More grid in subpages. */
+#moreMenu[hidden]{display:none}
+.bottom-nav button{min-width:0}
+.bottom-nav button b{white-space:nowrap}

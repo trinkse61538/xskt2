@@ -15,7 +15,7 @@ const state={
   calendarMonth:firstOfMonth(initial),compareStation:null,compareWindow:30,
   allYear:d.getFullYear(),allMonth:d.getMonth()+1,allTier:'ALL',allSearch:'',moreSub:null
 };
-const titles={today:'Hôm nay',best:'Ngày tốt',guide:'Hướng dẫn',stats:'Thống kê',more:'Thêm'};
+const titles={today:'Hôm nay',best:'Ngày tốt',guide:'Hướng dẫn',all:'Tất cả ngày',stats:'Thống kê',more:'Thêm'};
 let deferredInstall=null,renderToken=0;
 const ctx={state,$,navigate:setScreen,openMore,toast};
 
@@ -25,11 +25,11 @@ function syncNav(){
   $$('.bottom-nav button').forEach(x=>x.classList.toggle('active',x.dataset.screen===state.screen));
   $('#screenTitle').textContent=titles[state.screen]||'XSKT2';
 }
-async function setScreen(name){state.screen=name;state.moreSub=null;syncNav();await renderActive();window.scrollTo({top:0,behavior:'instant'});}
+async function setScreen(name){if(name==='stats')return openMore('stats');state.screen=name;state.moreSub=null;syncNav();await renderActive();window.scrollTo({top:0,behavior:'instant'});}
 function showMoreMenu(){state.moreSub=null;$('#moreMenu').hidden=false;$$('.subscreen').forEach(x=>x.classList.remove('active'));$('#screenTitle').textContent='Thêm';}
-async function openMore(name){state.screen='more';state.moreSub=name;syncNav();$('#moreMenu').hidden=true;$$('.subscreen').forEach(x=>x.classList.toggle('active',x.id===`more-${name}`));$('#screenTitle').textContent={profile:'Hồ sơ Personal',calendar:'Lịch tháng',compare:'Đối chiếu đài',all:'Tất cả ngày',method:'Phương pháp',about:'Phiên bản'}[name]||'Thêm';await renderMore(name);window.scrollTo({top:0,behavior:'instant'});}
-async function renderMore(name){if(name==='profile')return renderProfile(ctx);if(name==='calendar')return renderCalendar(ctx);if(name==='compare')return renderCompare(ctx);if(name==='all')return renderAll(ctx);if(name==='method')return renderMethod(ctx);if(name==='about')return renderAbout(ctx);}
-async function renderActive(){const token=++renderToken;try{if(state.screen==='today')await renderToday(ctx);else if(state.screen==='best')await renderBest(ctx);else if(state.screen==='guide')await renderGuide(ctx);else if(state.screen==='stats')await renderStats(ctx);else if(state.screen==='more'){if(state.moreSub)await renderMore(state.moreSub);else showMoreMenu();}}catch(e){console.error(e);toast(e.message||'Có lỗi khi render');}if(token!==renderToken)return;syncControls();}
+async function openMore(name){if(name==='all')return setScreen('all');state.screen='more';state.moreSub=name;syncNav();$('#moreMenu').hidden=true;$$('.subscreen').forEach(x=>x.classList.toggle('active',x.id===`more-${name}`));$('#screenTitle').textContent={profile:'Hồ sơ Personal',calendar:'Lịch tháng',compare:'Đối chiếu đài',stats:'Thống kê',method:'Phương pháp',about:'Phiên bản'}[name]||'Thêm';await renderMore(name);window.scrollTo({top:0,behavior:'instant'});}
+async function renderMore(name){if(name==='profile')return renderProfile(ctx);if(name==='calendar')return renderCalendar(ctx);if(name==='compare')return renderCompare(ctx);if(name==='stats')return renderStats(ctx);if(name==='method')return renderMethod(ctx);if(name==='about')return renderAbout(ctx);}
+async function renderActive(){const token=++renderToken;try{if(state.screen==='today')await renderToday(ctx);else if(state.screen==='best')await renderBest(ctx);else if(state.screen==='guide')await renderGuide(ctx);else if(state.screen==='all')await renderAll(ctx);else if(state.screen==='more'){if(state.moreSub)await renderMore(state.moreSub);else showMoreMenu();}}catch(e){console.error(e);toast(e.message||'Có lỗi khi render');}if(token!==renderToken)return;syncControls();}
 function syncControls(){
   $('#datePick').value=state.date;$('#bestStart').value=state.bestStart;$('#guideStake').value=state.guideStake;
   $$('#bestCount button').forEach(b=>b.classList.toggle('active',Number(b.dataset.count)===state.bestCount));
@@ -101,6 +101,6 @@ if('serviceWorker'in navigator){
   window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(console.warn));
 }
 
-document.addEventListener('visibilitychange',()=>{if(!document.hidden){invalidateHistory();if(['today','stats','best','guide'].includes(state.screen)||(state.screen==='more'&&state.moreSub==='all'))renderActive();}});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){invalidateHistory();if(['today','all','best','guide'].includes(state.screen)||(state.screen==='more'&&state.moreSub==='stats'))renderActive();}});
 window.addEventListener('online',()=>{invalidateHistory();renderActive()});
 initSelects();syncNav();syncControls();renderActive();

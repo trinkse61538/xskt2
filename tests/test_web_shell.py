@@ -3,7 +3,7 @@ ROOT=Path(__file__).resolve().parents[1]
 
 def test_five_primary_screens_are_real():
     html=(ROOT/'index.html').read_text(encoding='utf-8')
-    for name in ('today','best','guide','stats','more'):
+    for name in ('today','best','guide','all','more'):
         assert f'id="screen-{name}"' in html
         assert f'data-screen="{name}"' in html
     assert 'data-scroll=' not in html

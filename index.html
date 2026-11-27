@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="XSKT2">
   <meta name="description" content="XSKT2 Universal Core và Personal Overlay: Thiên thời, ngày tốt, thống kê và đối chiếu XSMN.">
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="stylesheet" href="./assets/style.css">
+  <link rel="stylesheet" href="./assets/style.css?v=3.7.0">
   <link rel="stylesheet" href="./assets/all-days-v36.css?v=3.6.0">
   <link rel="stylesheet" href="./assets/audit-v2.css">
   <link rel="stylesheet" href="./assets/audit-v3.css">
@@ -23,7 +23,7 @@
 <div id="app">
   <header class="app-header">
     <div class="header-copy">
-      <div class="eyebrow">XSKT2 V3.6 · UNIVERSAL V1.0 · PERSONAL V1.1</div>
+      <div class="eyebrow">XSKT2 V3.7 · UNIVERSAL V1.0 · PERSONAL V1.1</div>
       <h1 id="screenTitle">Hôm nay</h1>
     </div>
     <div class="header-actions">
@@ -98,7 +98,29 @@
       <div class="method-note warning"><b>Lưu ý</b><span>Đây là công cụ mô phỏng vốn theo payout giả định, không làm tăng xác suất trúng và không được dùng để sửa Chủ 1/Chủ 2.</span></div>
     </section>
 
-    <section id="screen-stats" class="screen">
+    <section id="screen-all" class="screen">
+        <div class="subhead"><div><span>UNIVERSAL CALENDAR</span><h2>Tất cả ngày</h2></div></div>
+        <div class="filter-card">
+          <div class="two-col"><select id="allYear" aria-label="Năm"></select><select id="allMonth" aria-label="Tháng"></select></div>
+          <div id="allTier" class="segmented wrap compact"><button data-tier="ALL" class="active">Tất cả</button><button data-tier="S">S</button><button data-tier="A">A</button><button data-tier="B">B</button><button data-tier="C">C</button></div>
+          <input id="allSearch" type="search" placeholder="Tìm số, tên đài, Can Chi, Nạp âm, tiết khí…">
+        </div>
+        <div id="allSummary" class="summary-line"></div>
+        <div id="allDays" class="day-list compact-list"></div>
+      </section>
+
+    <section id="screen-more" class="screen">
+      <div id="moreMenu" class="more-grid">
+        <button data-more="profile"><span>👤</span><b>Hồ sơ Personal</b><small>Bát Tự overlay</small></button>
+        <button data-more="calendar"><span>🗓</span><b>Lịch tháng</b><small>Score · Tier · Chủ 1/2</small></button>
+        <button data-more="compare"><span>📊</span><b>Đối chiếu đài</b><small>Recent Form · Station Match</small></button>
+        <button data-more="stats"><span>▥</span><b>Thống kê</b><small>WIN/MISS · Backtest · Đài 1</small></button>
+        <button data-more="method"><span>🧭</span><b>Phương pháp</b><small>Universal / Personal</small></button>
+        <button data-more="about"><span>ℹ️</span><b>Data Health & Research Lab</b><small>Độ đầy đủ · Backtest</small></button>
+      </div>
+
+      <section id="more-stats" class="subscreen">
+        <div class="subhead"><button class="back-more" aria-label="Quay lại mục Thêm">‹</button><div><span>RESEARCH</span><h2>Thống kê</h2></div></div>
       <div class="method-hero stats-hero">
         <div class="method-kicker">RETROSPECTIVE · HISTORY-ONLY EVALUATION</div>
         <h2>Universal vs Personal vs Random</h2>
@@ -120,16 +142,6 @@
       </div>
       <div id="statsDays" class="stats-days"></div>
     </section>
-
-    <section id="screen-more" class="screen">
-      <div id="moreMenu" class="more-grid">
-        <button data-more="profile"><span>👤</span><b>Hồ sơ Personal</b><small>Bát Tự overlay</small></button>
-        <button data-more="calendar"><span>🗓</span><b>Lịch tháng</b><small>Score · Tier · Chủ 1/2</small></button>
-        <button data-more="compare"><span>📊</span><b>Đối chiếu đài</b><small>Recent Form · Station Match</small></button>
-        <button data-more="all"><span>🔎</span><b>Tất cả ngày</b><small>Tìm 2026–2050</small></button>
-        <button data-more="method"><span>🧭</span><b>Phương pháp</b><small>Universal / Personal</small></button>
-        <button data-more="about"><span>ℹ️</span><b>Data Health & Research Lab</b><small>Độ đầy đủ · Backtest</small></button>
-      </div>
 
       <section id="more-profile" class="subscreen">
         <div class="subhead"><button class="back-more">‹</button><div><span>PERSONAL OVERLAY</span><h2>Hồ sơ cá nhân</h2></div></div>
@@ -170,16 +182,7 @@
         <div id="compareWarning" class="method-note warning"></div>
       </section>
 
-      <section id="more-all" class="subscreen">
-        <div class="subhead"><button class="back-more">‹</button><div><span>UNIVERSAL CALENDAR</span><h2>Tất cả ngày</h2></div></div>
-        <div class="filter-card">
-          <div class="two-col"><select id="allYear" aria-label="Năm"></select><select id="allMonth" aria-label="Tháng"></select></div>
-          <div id="allTier" class="segmented wrap compact"><button data-tier="ALL" class="active">Tất cả</button><button data-tier="S">S</button><button data-tier="A">A</button><button data-tier="B">B</button><button data-tier="C">C</button></div>
-          <input id="allSearch" type="search" placeholder="Tìm số, tên đài, Can Chi, Nạp âm, tiết khí…">
-        </div>
-        <div id="allSummary" class="summary-line"></div>
-        <div id="allDays" class="day-list compact-list"></div>
-      </section>
+      
 
       <section id="more-method" class="subscreen">
         <div class="subhead"><button class="back-more">‹</button><div><span>SPECIFY → FREEZE → TEST</span><h2>Phương pháp XSKT2</h2></div></div>
@@ -197,12 +200,12 @@
     <button data-screen="today" class="active"><span>⌂</span><b>Hôm nay</b></button>
     <button data-screen="best"><span>✦</span><b>Ngày tốt</b></button>
     <button data-screen="guide"><span>◎</span><b>Hướng dẫn</b></button>
-    <button data-screen="stats"><span>▥</span><b>Thống kê</b></button>
+    <button data-screen="all"><span>▤</span><b>Tất cả ngày</b></button>
     <button data-screen="more"><span>•••</span><b>Thêm</b></button>
   </nav>
 </div>
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script type="module" src="./assets/app.js?v=3.6.0"></script>
+<script type="module" src="./assets/app.js?v=3.7.0"></script>
 </body>
 </html>
