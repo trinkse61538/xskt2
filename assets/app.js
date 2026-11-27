@@ -6,7 +6,7 @@ const scopeOptions=['station1','any',...[...new Set(Object.values(XSMN_SCHEDULE)
 const storedScope=readChoice(STATS_KEY,'station1');
 import {renderToday,renderBest,renderGuide,renderStats,renderCalendar,renderCompare,renderAll,renderProfile,renderMethod,renderAbout} from './screens.js?v=3.6.0';
 
-import {initLookupV381} from './lookup-v381.js?v=3.8.1';
+import {initLookupV381} from './lookup-v381.js?v=3.8.2';
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const initial=todayISO(),d=parseISO(initial);

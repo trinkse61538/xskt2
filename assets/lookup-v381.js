@@ -1,5 +1,6 @@
+import {initLookupDate} from './lookup-date-v382.js?v=3.8.2';
 // Historical ticket checking only: no prediction, payment or betting integration.
-import {initLookup,validDate} from './lookup-v38.js?v=3.8.1';
+import {initLookup,validDate} from './lookup-v38.js?v=3.8.2';
 import {loadHistoryIndex,invalidateHistory,vnISO,fmtDate,esc,addDays} from './data.js';
 import {stationsForDate} from './history.js';
 export const TICKET_FIRST='2017-01-01';
@@ -57,7 +58,8 @@ export function initLookupV381(host){
  const form=panel.querySelector('form'),date=panel.querySelector('#ticketDate'),input=panel.querySelector('#ticketNumbers'),out=panel.querySelector('#ticketResult');let seq=0;
  const setMax=()=>{date.max=vnISO()};setMax();date.value=date.max;
  const clear=()=>{seq++;out.innerHTML='<div class="empty-state">Nhấn Dò vé để kiểm tra lựa chọn mới.</div>'};form.addEventListener('input',clear);
- panel.querySelector('#ticketToday').onclick=()=>{setMax();date.value=date.max;clear()};panel.querySelector('#ticketYesterday').onclick=()=>{setMax();date.value=addDays(date.max,-1);clear()};panel.querySelector('#ticketClear').onclick=()=>{input.value='';clear();input.focus()};
+ const nav=initLookupDate(date);
+  panel.querySelector('#ticketToday').onclick=()=>{setMax();nav.choose(date.max)};panel.querySelector('#ticketYesterday').onclick=()=>{setMax();nav.choose(addDays(date.max,-1))};panel.querySelector('#ticketClear').onclick=()=>{input.value='';clear();input.focus()};
  form.addEventListener('submit',async e=>{e.preventDefault();setMax();const token=++seq,ds=date.value;let tickets;try{if(!validDate(ds,date.max)||ds<TICKET_FIRST)throw Error('Chọn ngày từ 01/01/2017 đến hôm nay.');tickets=parseTickets(input.value);}catch(err){out.innerHTML=`<div class="error-card">${esc(err.message)}</div>`;return;}
  out.innerHTML='<div class="skeleton-card">Đang tải kết quả gốc…</div>';try{invalidateHistory();const hist=await loadHistoryIndex(ds,ds);const raw=await loadFullDay(ds,hist);if(token!==seq)return;out.innerHTML=render(compareTicketDay(ds,tickets,hist.dates?.[ds]?.draws||[],raw),ds,hist);}catch(err){if(token===seq)out.innerHTML=`<div class="error-card"><b>Chưa thể dò vé</b><span>${esc(err.message||'Vui lòng thử lại.')}</span><span>Không kết luận không trúng nếu dữ liệu chưa đầy đủ.</span></div>`;}});
 }

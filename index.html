@@ -9,9 +9,10 @@
   <meta name="apple-mobile-web-app-title" content="XSKT2">
   <meta name="description" content="XSKT2 Universal Core và Personal Overlay: Thiên thời, ngày tốt, thống kê và đối chiếu XSMN.">
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="stylesheet" href="./assets/style.css?v=3.8.1">
-  <link rel="stylesheet" href="./assets/lookup-v38.css?v=3.8.1">
-  <link rel="stylesheet" href="./assets/lookup-v381.css?v=3.8.1">
+  <link rel="stylesheet" href="./assets/style.css?v=3.8.2">
+  <link rel="stylesheet" href="./assets/lookup-v38.css?v=3.8.2">
+  <link rel="stylesheet" href="./assets/lookup-v381.css?v=3.8.2">
+  <link rel="stylesheet" href="./assets/lookup-date-v382.css?v=3.8.2">
   <link rel="stylesheet" href="./assets/all-days-v36.css?v=3.6.0">
   <link rel="stylesheet" href="./assets/audit-v2.css">
   <link rel="stylesheet" href="./assets/audit-v3.css">
@@ -25,7 +26,7 @@
 <div id="app">
   <header class="app-header">
     <div class="header-copy">
-      <div class="eyebrow">XSKT2 V3.8.1 · UNIVERSAL V1.0 · PERSONAL V1.1</div>
+      <div class="eyebrow">XSKT2 V3.8.2 · UNIVERSAL V1.0 · PERSONAL V1.1</div>
       <h1 id="screenTitle">Hôm nay</h1>
     </div>
     <div class="header-actions">
@@ -116,7 +117,14 @@
       <div class="mode-switch" aria-label="Chế độ dò"><button type="button" data-lookup-mode="ticket" class="active" aria-pressed="true">Vé 6 chữ số</button><button type="button" data-lookup-mode="tail" aria-pressed="false">2 số cuối</button></div>
       <div id="lookupTicketPanel">
         <form class="control-card" id="ticketForm">
-          <label class="field"><span>Ngày mở thưởng</span><input id="ticketDate" type="date" min="2017-01-01" required></label>
+          <div class="lookup-date-field">
+          <span class="lookup-date-caption">Ngày mở thưởng</span><input id="ticketDate" type="date" min="2017-01-01" hidden>
+          <div class="lookup-date-toolbar"><button type="button" data-date-prev aria-label="Ngày trước">‹</button><button type="button" data-date-open aria-expanded="false" aria-controls="ticketDateCalendar">Chọn ngày</button><button type="button" data-date-next aria-label="Ngày sau">›</button></div>
+          <div id="ticketDateCalendar" data-date-calendar class="lookup-calendar" hidden>
+            <div class="lookup-calendar-head"><button type="button" data-month-prev aria-label="Tháng trước">‹</button><select data-date-month aria-label="Chọn tháng"></select><select data-date-year aria-label="Chọn năm"></select><button type="button" data-month-next aria-label="Tháng sau">›</button></div>
+            <div class="lookup-calendar-week" aria-hidden="true"><span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span><span>CN</span></div><div class="lookup-calendar-grid" data-date-grid></div>
+          </div>
+        </div>
           <div class="lookup-actions"><button type="button" id="ticketToday" class="ghost wide-btn">Hôm nay</button><button type="button" id="ticketYesterday" class="ghost wide-btn">Hôm qua</button></div>
           <label class="field"><span>Số vé (6 chữ số)</span><textarea id="ticketNumbers" placeholder="Ví dụ: 025653, 725654" maxlength="1000" rows="3" autocomplete="off" required></textarea></label>
           <p class="helper">Nhập tối đa 50 số vé, giữ số 0 đầu. Kiểm tra tất cả đài trong ngày có dữ liệu gốc.</p>
@@ -127,7 +135,14 @@
       </div>
       <div id="lookupTailPanel" hidden>
       <form class="control-card" id="lookupForm">
-        <label class="field"><span>Ngày cần dò</span><input id="lookupDate" type="date" min="2005-10-01" required></label>
+        <div class="lookup-date-field">
+          <span class="lookup-date-caption">Ngày cần dò</span><input id="lookupDate" type="date" min="2005-10-01" hidden>
+          <div class="lookup-date-toolbar"><button type="button" data-date-prev aria-label="Ngày trước">‹</button><button type="button" data-date-open aria-expanded="false" aria-controls="lookupDateCalendar">Chọn ngày</button><button type="button" data-date-next aria-label="Ngày sau">›</button></div>
+          <div id="lookupDateCalendar" data-date-calendar class="lookup-calendar" hidden>
+            <div class="lookup-calendar-head"><button type="button" data-month-prev aria-label="Tháng trước">‹</button><select data-date-month aria-label="Chọn tháng"></select><select data-date-year aria-label="Chọn năm"></select><button type="button" data-month-next aria-label="Tháng sau">›</button></div>
+            <div class="lookup-calendar-week" aria-hidden="true"><span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span><span>CN</span></div><div class="lookup-calendar-grid" data-date-grid></div>
+          </div>
+        </div>
         <div class="lookup-actions"><button type="button" id="lookupToday" class="ghost wide-btn">Hôm nay</button><button type="button" id="lookupYesterday" class="ghost wide-btn">Hôm qua</button></div>
         <label class="field"><span>Các số cần dò (00–99)</span><textarea id="lookupNumbers" placeholder="Ví dụ: 07, 27, 89" maxlength="1000" rows="3" autocomplete="off" required></textarea></label>
         <p class="helper">Nhập nhiều số, cách nhau bằng dấu cách, dấu phẩy, chấm phẩy hoặc xuống dòng. Số 7 tự chuẩn hóa thành 07; số trùng chỉ tính một lần.</p>
@@ -236,6 +251,6 @@
 </div>
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script type="module" src="./assets/app.js?v=3.8.1"></script>
+<script type="module" src="./assets/app.js?v=3.8.2"></script>
 </body>
 </html>

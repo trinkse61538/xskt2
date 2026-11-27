@@ -1,3 +1,4 @@
+import {initLookupDate} from './lookup-date-v382.js?v=3.8.2';
 // Historical two-digit result lookup only. No prediction or betting calculations.
 import {loadHistoryIndex,invalidateHistory,vnISO,fmtDate,esc,addDays} from './data.js';
 import {stationsForDate} from './history.js';
@@ -58,8 +59,9 @@ export function initLookup(host){
   const setMax=()=>{date.max=vnISO()};setMax();date.value=date.max;
   const clear=()=>{seq++;out.innerHTML='<div class="empty-state">Nhấn Dò kết quả để kiểm tra lựa chọn mới.</div>'};
   form.addEventListener('input',clear);
-  host.querySelector('#lookupToday').onclick=()=>{setMax();date.value=date.max;clear()};
-  host.querySelector('#lookupYesterday').onclick=()=>{setMax();date.value=addDays(date.max,-1);clear()};
+  const nav=initLookupDate(date);
+  host.querySelector('#lookupToday').onclick=()=>{setMax();nav.choose(date.max)};
+  host.querySelector('#lookupYesterday').onclick=()=>{setMax();nav.choose(addDays(date.max,-1))};
   host.querySelector('#lookupClear').onclick=()=>{input.value='';clear();input.focus()};
   form.addEventListener('submit',async e=>{
     e.preventDefault();setMax();const token=++seq,ds=date.value;let nums;

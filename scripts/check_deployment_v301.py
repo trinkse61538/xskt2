@@ -3,7 +3,7 @@
 import hashlib,json,time,urllib.request,sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1];BASE='https://xskt2.khaitringuyen.com/'
-FILES=('package.json','sw.js','assets/health-v2.js','data/history/derived/health.json','data/backtest/research-v3.json','index.html','assets/app.js','assets/screens.js','assets/station-v31.js','assets/station-v31.css','assets/monthly-v32.js','assets/style.css','assets/guide-v33.js','assets/guide-v33.css','assets/guide-v34.js','assets/data.js','assets/guide-v35.js','assets/all-days-v36.js','assets/all-days-v36.css','assets/lookup-v38.js','assets/lookup-v38.css','assets/lookup-v381.js','assets/lookup-v381.css')
+FILES=('package.json','sw.js','assets/health-v2.js','data/history/derived/health.json','data/backtest/research-v3.json','index.html','assets/app.js','assets/screens.js','assets/station-v31.js','assets/station-v31.css','assets/monthly-v32.js','assets/style.css','assets/guide-v33.js','assets/guide-v33.css','assets/guide-v34.js','assets/data.js','assets/guide-v35.js','assets/all-days-v36.js','assets/all-days-v36.css','assets/lookup-v38.js','assets/lookup-v38.css','assets/lookup-v381.js','assets/lookup-v381.css','assets/lookup-date-v382.js','assets/lookup-date-v382.css')
 def verify():
     remote={};errors=[]
     for f in FILES:
