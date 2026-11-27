@@ -1,0 +1,5 @@
+/* Schedule wraps on small phones, without affecting other day cards. */
+.day-main .all36-schedule,.day-main .all36-results{max-width:none;white-space:normal;overflow-wrap:anywhere;line-height:1.55;font-size:11px;margin-top:5px}
+.all36-main{color:#9bc4ff;font-weight:700}
+.all36-results{display:flex!important;flex-wrap:wrap;gap:4px 8px}
+.all36-status{border:1px solid #334155;border-radius:6px;padding:1px 5px;max-width:100%}

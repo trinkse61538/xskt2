@@ -10,6 +10,7 @@
   <meta name="description" content="XSKT2 Universal Core và Personal Overlay: Thiên thời, ngày tốt, thống kê và đối chiếu XSMN.">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="stylesheet" href="./assets/style.css">
+  <link rel="stylesheet" href="./assets/all-days-v36.css?v=3.6.0">
   <link rel="stylesheet" href="./assets/audit-v2.css">
   <link rel="stylesheet" href="./assets/audit-v3.css">
   <link rel="stylesheet" href="./assets/station-v31.css">
@@ -22,7 +23,7 @@
 <div id="app">
   <header class="app-header">
     <div class="header-copy">
-      <div class="eyebrow">XSKT2 V3.5 · UNIVERSAL V1.0 · PERSONAL V1.1</div>
+      <div class="eyebrow">XSKT2 V3.6 · UNIVERSAL V1.0 · PERSONAL V1.1</div>
       <h1 id="screenTitle">Hôm nay</h1>
     </div>
     <div class="header-actions">
@@ -174,7 +175,7 @@
         <div class="filter-card">
           <div class="two-col"><select id="allYear" aria-label="Năm"></select><select id="allMonth" aria-label="Tháng"></select></div>
           <div id="allTier" class="segmented wrap compact"><button data-tier="ALL" class="active">Tất cả</button><button data-tier="S">S</button><button data-tier="A">A</button><button data-tier="B">B</button><button data-tier="C">C</button></div>
-          <input id="allSearch" type="search" placeholder="Tìm số, Can Chi, Nạp âm, tiết khí…">
+          <input id="allSearch" type="search" placeholder="Tìm số, tên đài, Can Chi, Nạp âm, tiết khí…">
         </div>
         <div id="allSummary" class="summary-line"></div>
         <div id="allDays" class="day-list compact-list"></div>
@@ -202,6 +203,6 @@
 </div>
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script type="module" src="./assets/app.js?v=3.5.0"></script>
+<script type="module" src="./assets/app.js?v=3.6.0"></script>
 </body>
 </html>

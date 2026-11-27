@@ -1,3 +1,4 @@
+import {dayStations,matchesDay,stationsHTML} from './all-days-v36.js?v=3.6.0';
 import {enrichResearch} from './research-v2.js';
 import {renderStationPanel,scopedDraws,stationResults} from './station-v31.js';
 import {healthPanel,statsBounds,renderAboutV2} from './health-v2.js';
@@ -115,10 +116,18 @@ export async function renderCompare(ctx){
 }
 
 export async function renderAll(ctx){
-  const {state,$}=ctx,rows=(await loadYear(state.allYear)).filter(r=>Number(r.date.slice(5,7))===state.allMonth),q=(state.allSearch||'').trim().toLowerCase(),profile=readProfile();
-  const filtered=rows.filter(r=>(state.allTier==='ALL'||r.universal.tier===state.allTier)&&(!q||[r.date,r.calendar?.day,r.calendar?.year,r.calendar?.month,r.calendar?.nayin,r.calendar?.solar_term,r.universal.primary,r.universal.secondary,...r.universal.top5].join(' ').toLowerCase().includes(q)));
-  $('#allSummary').textContent=`${filtered.length}/${rows.length} ngày · ${state.allTier==='ALL'?'mọi Tier':`Tier ${state.allTier}`} · ${state.mode==='personal'&&profile?'hiển thị Personal picks':'hiển thị Universal picks'}`;
-  $('#allDays').innerHTML=filtered.map(r=>dayCard(r,picksFor(r,state.mode,profile))).join('')||'<div class="empty-note">Không có ngày phù hợp.</div>';
+  const {state,$}=ctx,req=Symbol(),year=state.allYear,month=state.allMonth,tier=state.allTier,q=state.allSearch,mode=state.mode;
+  ctx.allRequest=req;
+  const host=$('#allDays'),summary=$('#allSummary'),start=`${year}-${String(month).padStart(2,'0')}-01`;
+  host.innerHTML='<div class="skeleton-card">Đang tải lịch đài và kết quả…</div>';summary.textContent='';
+  try{
+    const [calendar,hist]=await Promise.all([loadYear(year),loadHistoryIndex(start).catch(()=>({dates:{},unavailable:true}))]);
+    if(ctx.allRequest!==req)return;
+    const rows=calendar.filter(r=>Number(r.date.slice(5,7))===month).sort((a,b)=>a.date.localeCompare(b.date)),profile=readProfile(),completed=completedISO();
+    const items=rows.map(r=>({r,picks:picksFor(r,mode,profile)})).filter(({r,picks})=>(tier==='ALL'||r.universal.tier===tier)&&matchesDay(r,picks,q));
+    summary.textContent=`${items.length}/${rows.length} ngày · ${tier==='ALL'?'mọi Tier':`Tier ${tier}`} · ${items.some(x=>x.picks.personal)?'Personal':'Universal'} · Đài 1 = đài đầu theo lịch, không phải xác suất cao hơn.`;
+    host.innerHTML=items.map(({r,picks})=>dayCard(r,picks,stationsHTML(dayStations(r.date,[picks.primary,picks.secondary],hist,completed)))).join('')||'<div class="empty-note">Không có ngày phù hợp.</div>';
+  }catch(e){if(ctx.allRequest===req)host.innerHTML=`<div class="error-card">${esc(e.message)}</div>`;}
 }
 
 export function renderProfile(ctx){
