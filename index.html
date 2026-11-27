@@ -9,15 +9,15 @@
   <meta name="apple-mobile-web-app-title" content="XSKT2">
   <meta name="description" content="XSKT2 Universal Core và Personal Overlay: Thiên thời, ngày tốt, thống kê và đối chiếu XSMN.">
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="stylesheet" href="./assets/style.css?v=3.9.4">
-  <link rel="stylesheet" href="./assets/lookup-v38.css?v=3.9.4">
-  <link rel="stylesheet" href="./assets/lookup-v381.css?v=3.9.4">
-  <link rel="stylesheet" href="./assets/lookup-date-v382.css?v=3.9.4">
+  <link rel="stylesheet" href="./assets/style.css?v=3.9.5">
+  <link rel="stylesheet" href="./assets/lookup-v38.css?v=3.9.5">
+  <link rel="stylesheet" href="./assets/lookup-v381.css?v=3.9.5">
+  <link rel="stylesheet" href="./assets/lookup-date-v382.css?v=3.9.5">
   <link rel="stylesheet" href="./assets/all-days-v36.css?v=3.6.0">
   <link rel="stylesheet" href="./assets/audit-v2.css">
   <link rel="stylesheet" href="./assets/audit-v3.css">
   <link rel="stylesheet" href="./assets/station-v31.css">
-  <link rel="stylesheet" href="./assets/guide-v33.css">
+  <link rel="stylesheet" href="./assets/guide-v33.css?v=3.9.5">
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
   <link rel="icon" href="./icons/icon-192.png">
   <title>XSKT2 — Thiên thời & Cá nhân</title>
@@ -26,7 +26,7 @@
 <div id="app">
   <header class="app-header">
     <div class="header-copy">
-      <div class="eyebrow">XSKT2 V3.9.4 · UNIVERSAL V1.0 · PERSONAL V1.1</div>
+      <div class="eyebrow">XSKT2 V3.9.5 · UNIVERSAL V1.0 · PERSONAL V1.1</div>
       <h1 id="screenTitle">Hôm nay</h1>
     </div>
     <div class="header-actions">
@@ -70,7 +70,7 @@
 
     <section id="screen-guide" class="screen">
       <div class="method-hero">
-        <div class="method-kicker">V3.5 · ĐÀI 1 · MÔ PHỎNG VỐN & REVIEW</div>
+        <div class="method-kicker">V3.9.5 · ĐÀI 1 · MÔ PHỎNG VỐN & REVIEW</div>
         <h2>Hướng dẫn theo chu kỳ</h2>
         <p>Chọn số ngày và mốc trong tháng. Đối chiếu kết quả đài 1, chi phí giả lập và điểm dừng. Không thay đổi scoring engine.</p>
       </div>
@@ -86,8 +86,14 @@
         <div class="control-label"><span>Phạm vi số theo dõi · đài 1</span><b>Chọn 1 hoặc 2 số</b></div>
         <div id="guideTopButtons" class="segmented wrap"><button type="button" data-top="1" aria-pressed="false">Top 1 · Chủ 1</button><button type="button" data-top="2" class="active" aria-pressed="true">Top 2 · Chủ 1 + 2</button></div>
         <select id="guideTop" hidden aria-hidden="true" tabindex="-1"><option value="2" selected>Top 2</option><option value="1">Top 1</option></select>
-        <label class="field"><span>Tiền giả lập mỗi số</span><input id="guideStake" type="number" min="15000" step="15000" value="75000" inputmode="numeric"></label>
-        <label class="field"><span>Bước số (1 bước = 15.000đ/số)</span><input id="guideStep" type="number" min="1" step="1" inputmode="numeric"></label>
+        <div class="control-label"><span>Phương pháp mô phỏng</span><b>Chọn một chế độ</b></div>
+        <div id="guideMethodButtons" class="segmented wrap" role="group" aria-label="Phương pháp mô phỏng">
+          <button type="button" data-method="fixed" class="active" aria-pressed="true">Cố định</button>
+          <button type="button" data-method="legacy" aria-pressed="false">Lũy tiến</button>
+        </div>
+        <div id="guideMethodNote" class="helper"></div>
+        <label class="field"><span>Tiền giả lập mỗi số (kỳ đầu)</span><input id="guideStake" type="number" min="15000" step="15000" value="75000" inputmode="numeric"></label>
+        <label class="field"><span>Số bước kỳ đầu (1 bước = 15.000đ/số)</span><input id="guideStep" type="number" min="1" step="1" inputmode="numeric"></label>
         <label class="field"><span>Giới hạn tổng chi phí giả lập (đ)</span><input id="guideBudget" type="number" min="0" max="1000000000" step="1" value="0" inputmode="numeric"></label>
         <div class="helper">0đ = chưa đặt trần cá nhân; chỉ minh họa số học. Nhập trần để giới hạn chi phí mô phỏng.</div>
         <div id="stakeWarning" class="helper"></div>
@@ -95,7 +101,7 @@
       <div id="guideSummary"></div>
       <div class="section-title">Ngày được chọn</div>
       <div id="guideDates" class="guide-date-list"></div>
-      <div class="section-title">Mô phỏng từng ngày · mức cố định và công thức cũ</div>
+      <div id="guidePlanTitle" class="section-title">Mô phỏng từng ngày · Cố định</div>
       <div id="guidePlan" class="guide-plan-list"></div>
       <div id="guideFormula" class="method-note"></div>
       <div class="method-note warning"><b>Lưu ý</b><span>Đây là công cụ mô phỏng vốn theo payout giả định, không làm tăng xác suất trúng và không được dùng để sửa Chủ 1/Chủ 2.</span></div>
@@ -252,6 +258,6 @@
 </div>
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script type="module" src="./assets/app.js?v=3.9.4"></script>
+<script type="module" src="./assets/app.js?v=3.9.5"></script>
 </body>
 </html>

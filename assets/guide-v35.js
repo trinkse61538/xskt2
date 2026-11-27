@@ -42,8 +42,21 @@ const stopLabels={complete:'Đã hết ngày trong mẫu',budget:'Dừng: chạm
 const signed=n=>`${n>0?'+':''}${money(n)}`;
 const metric=(label,value)=>`<div><span>${label}</span><b>${value}</b></div>`;
 function reviewHTML(label,review,items){const at=items[review.stopIndex]?.r.date;return `<section class="guide33-review"><b>${label}</b><p>${esc(stopLabels[review.reason]||review.reason)}${at?` · ${fmtDate(at)}`:''}</p><div class="guide33-grid">${metric('Đã chấm trong mô phỏng',`${review.settled}/${items.length}`)}${metric('Chi phí',money(review.spent))}${metric('Thu về',money(review.received))}${metric('P/L hồi cứu',review.settled?signed(review.net):'—')}</div></section>`;}
+export function guideMethod(value){return value==='legacy'?'legacy':'fixed';}
+// The selected plan is a retrospective/conditional simulation, never an instruction to spend.
+export function guideRowKind(row){
+  if(row?.review==='skipped')return 'stopped';
+  if(!row?.plan?.allowed||row.review==='budget')return 'capped';
+  if(row.review==='unresolved'||row.review==='unverified')return 'conditional';
+  return 'settled';
+}
 export async function renderGuideV35(ctx){
   const {state,$}=ctx,req=Symbol(),start=state.guideStart,count=state.guideDays,mode=state.mode,top=state.guideTop===1?1:2;
+  const method=guideMethod(state.guideMethod),isLegacy=method==='legacy',methodLabel=isLegacy?'Lũy tiến':'Cố định';
+  state.guideMethod=method;
+  document.querySelectorAll('#guideMethodButtons button').forEach(b=>{const active=b.dataset.method===method;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});
+  $('#guideMethodNote').textContent=isLegacy?'Kịch bản công thức cũ: số bước thay đổi nếu các kỳ trước đều MISS. Không bảo đảm gỡ lỗ.':'Số bước mỗi kỳ không thay đổi.';
+  $('#guidePlanTitle').textContent='Mô phỏng từng ngày · '+methodLabel;
   ctx.guideRequest=req;const current=()=>ctx.guideRequest===req;
   const startInput=$('#guideStartDate'),stakeInput=$('#guideStake'),stepInput=$('#guideStep'),budgetInput=$('#guideBudget');
   const amount=normalizeAmount(state.guideStake),budget=integer(state.guideBudget,0,MAX_BUDGET,0);
@@ -61,18 +74,21 @@ export async function renderGuideV35(ctx){
     const stats=monthlySummary(items);
     // A zero input means no user cap; show mathematical scenarios only, with a hard display limit.
     const effectiveCap=budget||MAX_BUDGET;
-    const fixed=buildBudgetPlan(items.length,amount,effectiveCap,'fixed',top),review=reviewPlan(items,fixed);
-    const legacyPlan=buildBudgetPlan(items.length,amount,effectiveCap,'legacy',top),legacy=reviewPlan(items,legacyPlan);
+    const plan=buildBudgetPlan(items.length,amount,effectiveCap,method,top),review=reviewPlan(items,plan);
     const dayCost=amount*top,gross=amount/STEP*PAYOUT;
-    summary.innerHTML=`<div class="guide33-grid">${metric('Phạm vi số','Top '+top+' · '+top+' số')}${metric('Bước / số',amount/STEP)}${metric('Tiền mỗi số',money(amount))}${metric('Tổng ngày 1',money(dayCost))}${metric('Thu về 1 nháy ngày 1',money(gross))}${metric('Lãi nếu 1 nháy ngày 1',signed(gross-dayCost))}${metric('Số ngày',`${items.length}/${count}`)}${metric('WIN / đã chấm',`${stats.wins}/${stats.scored} · ${stats.scored?pct(stats.wins/stats.scored):'—'}`)}${metric('Tổng nháy lịch sử',stats.nhay)}${metric('Chi phí tối đa trong trần · cố định',money(fixed.maxOutlay))}${metric('Chi phí tối đa trong trần · công thức cũ',money(legacyPlan.maxOutlay))}${metric('Số ngày nằm trong trần · công thức cũ',`${legacyPlan.covered}/${items.length}`)}</div>
+    summary.innerHTML=`<div class="guide33-grid">${metric('Phương pháp',methodLabel)}${metric('Phạm vi số','Top '+top+' · '+top+' số')}${metric('Bước / số kỳ đầu',amount/STEP)}${metric('Tiền mỗi số kỳ đầu',money(amount))}${metric('Tổng chi phí kỳ đầu',money(dayCost))}${metric('Thu về 1 nháy kỳ đầu',money(gross))}${metric('Số ngày',`${items.length}/${count}`)}${metric('WIN / đã chấm',`${stats.wins}/${stats.scored} · ${stats.scored?pct(stats.wins/stats.scored):'—'}`)}${metric('Tổng nháy lịch sử',stats.nhay)}${metric('Chi phí tối đa nếu toàn MISS (trong trần)',money(plan.maxOutlay))}${metric('Số kỳ nằm trong trần',`${plan.covered}/${items.length}`)}</div>
     <p class="helper">${items.length<count?'Không đủ ngày từ mốc này trong tháng. Không tự chuyển tháng. ':''}WIN chỉ có nghĩa ít nhất một số xuất hiện. ${items.some(x=>x.picks.personal)?'Personal':'Universal'} · đài 1.</p>
-    <div class="method-note warning"><b>${budget?'Trần ngân sách giả lập: '+money(budget):'Chưa nhập trần ngân sách cá nhân'}</b><span>${budget?'Không mô phỏng chi phí vượt trần.':'Bảng chỉ minh họa số học, giới hạn hiển thị kỹ thuật 1 tỷ đồng; đây không phải ngân sách đề xuất.'} Công thức tăng bội không thay đổi xác suất trúng; chuỗi MISS có thể mất toàn bộ chi phí. Không phải khuyến nghị gỡ lỗ.</span></div>
-    ${reviewHTML('Review lịch sử · mức cố định',review,items)}
-    ${reviewHTML('Review lịch sử · công thức XSKT cũ',legacy,items)}`;
+    <div class="method-note warning"><b>${budget?'Trần ngân sách giả lập: '+money(budget):'Chưa nhập trần ngân sách cá nhân'}</b><span>${budget?'Không mô phỏng chi phí vượt trần.':'Giới hạn hiển thị kỹ thuật 1 tỷ đồng; không phải ngân sách đề xuất.'} Mọi số tiền là mô phỏng; lũy tiến không làm tăng xác suất trúng và có thể gây lỗ lớn.</span></div>
+    ${reviewHTML('Review lịch sử · '+methodLabel,review,items)}`;
     datesHost.innerHTML=items.map((x,i)=>`<button data-action="open-date" data-date="${esc(x.r.date)}" data-follow-station="${esc(x.station)}"><span>Ngày ${i+1} · ${fmtDate(x.r.date)}</span><b>${x.selected.map(esc).join(' · ')}</b><small>Đài 1: ${esc(x.station)} · <strong class="best32-${x.status}">${labels[x.status]}</strong>${x.result?.win?` · ${esc(x.result.hitNumbers.join(', '))} · ${x.result.totalNhay} nháy`:''}</small></button>`).join('')||'<div class="empty-note">Không có ngày trong tháng.</div>';
-    const stageText=(x)=>({stop:'DỪNG MÔ PHỎNG · WIN đầu tiên',skipped:'Sau điểm dừng · không tính vào P/L',budget:'Vượt trần · dừng mô phỏng',unresolved:'Chưa thể chấm chu kỳ',unverified:'Kỳ trước chưa xác định',settled:'Đã chấm'}[x.review]||'—');
-    const planDetails=(p,x)=>!p?.allowed?'<p class="helper">Ngoài giới hạn mô phỏng.</p>':`<div class="guide33-grid">${metric('Bước / số',p.steps)}${metric('Tiền / số',money(p.perNumber))}${metric('Tổng chi phí ngày',money(p.dayTotal))}${metric('Chi phí trước ngày này nếu toàn MISS',money(p.lossBefore))}${metric('Lũy kế nếu toàn MISS',money(p.cumulative))}${metric('Thu về 1 nháy',money(p.gross))}${metric('P/L nếu 1 nháy và các ngày trước MISS',signed(p.netIfOneHit))}${metric('P/L nếu tiếp tục MISS',signed(-p.cumulative))}</div>${x.net!==null?`<p><b>P/L đã chấm: ${signed(x.net)}</b> · ${x.result?.totalNhay||0} nháy</p>`:''}`;
-    planHost.innerHTML=items.map((x,i)=>{const f=review.rows[i],l=legacy.rows[i];return `<article class="guide33-row"><div class="guide33-head"><b>Ngày ${i+1} · ${fmtDate(x.r.date)} · ${esc(x.station)}</b><strong class="best32-${x.status}">${labels[x.status]}</strong></div><p>Top ${top} · ${x.selected.map(esc).join(' · ')}${x.result?.win?' · '+x.result.totalNhay+' nháy':''}</p><details ${i===0?'open':''}><summary>Mức cố định · ${stageText(f)}</summary>${planDetails(f.plan,f)}</details><details open><summary>Kịch bản công thức cũ nếu mọi kỳ trước MISS · ${stageText(l)}</summary>${planDetails(l.plan,l)}</details>${l.review==='stop'?'<p><b>Điểm dừng hồi cứu: đã WIN.</b> Các kỳ sau chỉ là giả định, không tính vào kết quả.</p>':''}</article>`}).join('');
+    const stageText=x=>({stop:'DỪNG · WIN đầu tiên',skipped:'Đã dừng · không tính chi phí',budget:'DỪNG · vượt trần',unresolved:'Chưa xác định kết quả',unverified:'Kỳ trước chưa xác định',settled:'Đã chấm'}[x.review]||'—');
+    planHost.innerHTML=items.map((x,i)=>{
+      const row=review.rows[i],p=row.plan,kind=guideRowKind(row);
+      const head=`<div class="guide33-head"><b>Kỳ ${i+1} · ${fmtDate(x.r.date)} · ${esc(x.station)}</b><strong class="best32-${x.status}">${labels[x.status]}</strong></div><p>Top ${top} · ${x.selected.map(esc).join(' · ')} · ${stageText(row)}</p>`;
+      if(kind==='capped'||kind==='stopped')return `<article class="guide33-row">${head}<p>${kind==='capped'?'Ngoài trần mô phỏng.':'Sau điểm dừng. Không phát sinh thêm chi phí.'}</p></article>`;
+      const info=kind==='conditional'?'<p><b>Kịch bản giả định nếu các kỳ trước đều MISS; chưa phải chi phí đã chấm.</b></p>':'';
+      return `<article class="guide33-row">${head}${info}<div class="guide395-main"><div><span>Số bước / số</span><b>${p.steps}</b></div><div><span>Chi phí giả lập / số</span><b>${money(p.perNumber)}</b></div><div><span>Tổng chi phí giả lập kỳ này</span><b>${money(p.dayTotal)}</b></div></div><div class="guide33-grid">${metric('Bội so với kỳ đầu',p.multiple+'×')}${metric('Chi phí lũy kế trước kỳ',money(p.lossBefore))}${metric('Lũy kế nếu toàn MISS',money(p.cumulative))}${metric('Thu về giả định 1 nháy',money(p.gross))}${metric('P/L nếu 1 nháy',signed(p.netIfOneHit))}${metric('P/L nếu MISS',signed(-p.cumulative))}${metric('Số nháy thực tế',x.result?x.result.totalNhay:'—')}${metric('P/L hồi cứu lũy kế',row.net===null?'—':signed(row.net))}</div>${row.review==='stop'?'<p><b>Điểm dừng hồi cứu: đã WIN. Các kỳ sau không tính chi phí.</b></p>':''}</article>`;
+    }).join('')||'<div class="empty-note">Không có ngày trong tháng.</div>';
     formula.innerHTML='<b>Quy ước và giới hạn</b><span>1 bước = 15.000đ/số, trả thưởng giả định 80.000đ/nháy/bước. Kịch bản cũ tính theo bội của tiền ngày 1 và giả định tất cả ngày trước đều MISS; bảng này là đối chiếu số học, không phải mức tiền khuyến nghị. WIN có thể không đồng nghĩa với lãi ở mức cố định. Review dừng ở WIN đầu tiên, hết ngày, dữ liệu chưa xác định hoặc vượt trần; các ngày sau không tính P/L. Không có công thức bảo đảm lợi nhuận.</span>';
   }catch(e){if(current())summary.innerHTML=`<div class="error-card">${esc(e.message)}</div>`;}
 }

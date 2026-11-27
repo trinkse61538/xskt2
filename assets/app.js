@@ -4,15 +4,15 @@ import {XSMN_SCHEDULE} from './history.js';
 import {readChoice,saveChoice,FOLLOW_KEY,STATS_KEY} from './station-v31.js';
 const scopeOptions=['station1','any',...[...new Set(Object.values(XSMN_SCHEDULE).flat())].map(n=>'station:'+n)];
 const storedScope=readChoice(STATS_KEY,'station1');
-import {renderToday,renderBest,renderGuide,renderStats,renderCalendar,renderCompare,renderAll,renderProfile,renderMethod,renderAbout} from './screens.js?v=3.9.4';
+import {renderToday,renderBest,renderGuide,renderStats,renderCalendar,renderCompare,renderAll,renderProfile,renderMethod,renderAbout} from './screens.js?v=3.9.5';
 
-import {initLookupV381} from './lookup-v381.js?v=3.9.4';
+import {initLookupV381} from './lookup-v381.js?v=3.9.5';
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const initial=todayISO(),d=parseISO(initial);
 const state={
   screen:'today',mode:localStorage.getItem('xskt2.mode')||'universal',date:initial,
-  bestStart:firstOfMonth(initial),bestCount:7,guideStart:firstOfMonth(initial),guideDays:4,guideStake:75000,guideBudget:0,guideTop:2,
+  bestStart:firstOfMonth(initial),bestCount:7,guideStart:firstOfMonth(initial),guideDays:4,guideStake:75000,guideBudget:0,guideTop:2,guideMethod:"fixed",
   statsWindow:'30',statsScope:scopeOptions.includes(storedScope)?storedScope:'station1',statsFilter:'ALL',
   calendarMonth:firstOfMonth(initial),compareStation:null,compareWindow:30,
   allYear:d.getFullYear(),allMonth:d.getMonth()+1,allTier:'ALL',allSearch:'',moreSub:null
@@ -78,6 +78,7 @@ $('#bestStart').addEventListener('change',async e=>{state.bestStart=clampDate(e.
 $('#bestPrevMonth').onclick=async()=>{state.bestStart=shiftMonth(firstOfMonth(state.bestStart),-1);await renderBest(ctx);syncControls();};
 $('#bestNextMonth').onclick=async()=>{state.bestStart=shiftMonth(firstOfMonth(state.bestStart),1);await renderBest(ctx);syncControls();};
 $('#guideStake').addEventListener('change',async e=>{state.guideStake=Math.max(15000,Number(e.target.value)||15000);await renderGuide(ctx);syncControls();});
+$('#guideMethodButtons').addEventListener('click',async e=>{const b=e.target.closest('[data-method]');if(!b)return;state.guideMethod=b.dataset.method==='legacy'?'legacy':'fixed';await renderGuide(ctx);syncControls();});
 $('#guideTopButtons').addEventListener('click',e=>{const b=e.target.closest('[data-top]');if(!b)return;$('#guideTop').value=b.dataset.top;$('#guideTop').dispatchEvent(new Event('change'));});
 $('#guideTop').addEventListener('change',async e=>{state.guideTop=Number(e.target.value)===1?1:2;await renderGuide(ctx);syncControls();});
 $('#guideStep').addEventListener('change',async e=>{state.guideStake=Math.max(1,Math.floor(Number(e.target.value)||1))*15000;await renderGuide(ctx);syncControls();});
