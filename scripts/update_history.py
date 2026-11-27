@@ -23,8 +23,8 @@ def main():
     for d in order[:max(0,a.limit)]:
         k=d.isoformat();p=RAW/f'{k}.json';err=FAIL/f'{k}-failure.json';nd=FAIL/f'{k}-nodraw.json'
         try:
-            a,b=fetch_pair(d,session);obj=a['day']
-            for row in obj['draws']:row['verification']={'sources':[a['source'],b['source']],'method':'named-station full value match'}
+            first,second=fetch_pair(d,session);obj=first['day']
+            for row in obj['draws']:row['verification']={'sources':[first['source'],second['source']],'method':'named-station full value match'}
             obj=validate_day(obj);atomic_json(p,obj);err.unlink(missing_ok=True);nd.unlink(missing_ok=True);print('Saved',k,len(obj['draws']))
         except NoDraw as e:
             # Source text alone is not independent evidence; keep retryable status.

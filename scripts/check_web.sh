@@ -17,5 +17,6 @@ if command -v node >/dev/null 2>&1; then
   node --test tests/history-v390.test.mjs
   node --test tests/archive-v391.test.mjs
   node --test tests/archive-v393.test.mjs
+  node --test tests/archive-v394.test.mjs
 fi
 python -m pytest -q

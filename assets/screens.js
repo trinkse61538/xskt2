@@ -1,5 +1,5 @@
-import {loadArchiveYear,archiveDetails,archiveSummary} from './archive-v393.js?v=3.9.3';
-import {dayStations,matchesDay,stationsHTML,historyDetails,historyMonthSummary} from './all-days-v36.js?v=3.9.3';
+import {loadArchiveYear,archiveDetails,archiveSummary,archiveQualityHTML} from './archive-v394.js?v=3.9.4';
+import {dayStations,matchesDay,stationsHTML,historyDetails,historyMonthSummary} from './all-days-v36.js?v=3.9.4';
 import {enrichResearch} from './research-v2.js';
 import {renderStationPanel,scopedDraws,stationResults} from './station-v31.js';
 import {healthPanel,statsBounds,renderAboutV2} from './health-v2.js';
@@ -124,12 +124,15 @@ export async function renderAll(ctx){
   try{
     const [calendar,hist,archive]=await Promise.all([loadYear(year),loadHistoryIndex(start).catch(()=>({dates:{},unavailable:true})),year<=Number(completedISO().slice(0,4))?loadArchiveYear(year).catch(()=>({dates:{},unavailable:true})):Promise.resolve({dates:{}})]);
     if(ctx.allRequest!==req)return;
+    const quality=await archiveQualityHTML().catch(()=>'<p class="helper">Không tải được báo cáo chất lượng kho bổ sung.</p>');
+    if(ctx.allRequest!==req)return;
     const rows=calendar.filter(r=>Number(r.date.slice(5,7))===month).sort((a,b)=>a.date.localeCompare(b.date)),profile=readProfile(),completed=completedISO();
     const items=rows.map(r=>({r,picks:picksFor(r,mode,profile)})).filter(({r,picks})=>(tier==='ALL'||r.universal.tier===tier)&&matchesDay(r,picks,q,dayStations(r.date,[picks.primary,picks.secondary],hist,completed).map(x=>x.station)));
     const coverage=historyMonthSummary(rows,hist,completed);
     summary.textContent=`${items.length}/${rows.length} ngày · ${tier==='ALL'?'mọi Tier':`Tier ${tier}`} · ${items.some(x=>x.picks.personal)?'Personal':'Universal'} · ${hist.unavailable?'Không tải được kết quả':`${coverage.available} ngày có bản ghi · ${coverage.missing} chưa có trong kho chính thức · ${coverage.pending} chờ`} · ${year<2026?'Lịch tái tạo hồi cứu; thứ tự đài theo bản ghi nếu có.':'Đài 1 = đài đầu theo lịch, không phải xác suất cao hơn.'}`;
     if(year<=Number(completed.slice(0,4)))summary.textContent+=` · ${archive.unavailable?'Kho bổ sung không tải được':archiveSummary(rows,archive,completed)}`;
-    host.innerHTML=items.map(({r,picks})=>{const nums=[picks.primary,picks.secondary];return `<article class="h39-day">${dayCard(r,picks,archive?.dates?.[r.date]?.status==='no_draw'?'<small>KHÔNG MỞ THƯỞNG</small>':stationsHTML(dayStations(r.date,nums,hist,completed)))}${archive?.dates?.[r.date]?.status==='no_draw'?'':historyDetails(r.date,nums,hist,completed)}${archiveDetails(r.date,archive,completed)}</article>`}).join('')||'<div class="empty-note">Không có ngày phù hợp.</div>';
+    host.innerHTML=items.map(({r,picks})=>{const nums=[picks.primary,picks.secondary];return `<article class="h39-day">${dayCard(r,picks,archive?.dates?.[r.date]?.status==='no_draw'?'<small>KHÔNG MỞ THƯỞNG</small>':stationsHTML(dayStations(r.date,nums,hist,completed)))}${archive?.dates?.[r.date]?.status==='no_draw'?'':historyDetails(r.date,nums,hist,completed)}${archiveDetails(r.date,archive,completed,nums)}</article>`}).join('')||'<div class="empty-note">Không có ngày phù hợp.</div>';
+    host.insertAdjacentHTML('afterbegin',quality);
   }catch(e){if(ctx.allRequest===req)host.innerHTML=`<div class="error-card">${esc(e.message)}</div>`;}
 }
 
