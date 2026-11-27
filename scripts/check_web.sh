@@ -8,5 +8,7 @@ if command -v node >/dev/null 2>&1; then
   node --test tests/station-v31.test.mjs
   node --test tests/monthly-v32.test.mjs
   node --test tests/guide-v33.test.mjs
+  node --test tests/guide-v34.test.mjs
+  node --test tests/guide-v35.test.mjs
 fi
 python -m pytest -q

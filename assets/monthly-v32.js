@@ -14,7 +14,7 @@ export function monthlyResult(date,picks,hist,completed=completedISO()){
   if(hist?.unavailable)return {station,status:'unavailable',result:null};
   const draws=scopedDraws(hist?.dates?.[date]?.draws||[],'station1',schedule);
   if(!draws.length)return {station,status:'missing',result:null};
-  if(picks.length!==2||new Set(picks).size!==2||!picks.every(p=>typeof p==='string'&&/^\d{2}$/.test(p)))return {station,status:'missing',result:null};
+  if(![1,2].includes(picks.length)||new Set(picks).size!==picks.length||!picks.every(p=>typeof p==='string'&&/^\d{2}$/.test(p)))return {station,status:'missing',result:null};
   const result=scoreStation(picks,draws);
   return {station,status:result.win?'win':'miss',result};
 }

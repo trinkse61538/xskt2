@@ -1,0 +1,12 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {buildBudgetPlan,reviewPlan} from '../assets/guide-v35.js';
+const hit=(nhay=1)=>({status:'win',result:{totalNhay:nhay}}),miss={status:'miss',result:{totalNhay:0}};
+test('75k / number Top 2: cost 150k, gross 400k, net 250k',()=>{const p=buildBudgetPlan(4,75000,1e9,'fixed',2);assert.equal(p.rows[0].dayTotal,150000);assert.equal(p.rows[0].gross,400000);assert.equal(p.rows[0].netIfOneHit,250000);assert.equal(p.maxOutlay,600000)});
+test('Top 1: cost and P/L are recomputed',()=>{const p=buildBudgetPlan(4,75000,1e9,'fixed',1);assert.equal(p.rows[0].dayTotal,75000);assert.equal(p.rows[0].netIfOneHit,325000);assert.equal(p.maxOutlay,300000)});
+test('old XSKT formula: conditional Top 2 arithmetic matches base multiples',()=>{const p=buildBudgetPlan(4,75000,1e9,'legacy',2);assert.deepEqual(p.rows.map(x=>x.multiple),[1,1,2,3]);assert.deepEqual(p.rows.map(x=>x.netIfOneHit),[250000,100000,200000,150000]);assert.equal(p.maxOutlay,1050000)});
+test('previous cost and current cost separated',()=>{const p=buildBudgetPlan(4,75000,1e9,'legacy',2);assert.equal(p.rows[2].lossBefore,300000);assert.equal(p.rows[2].dayTotal,300000);assert.equal(p.rows[2].cumulative,600000)});
+test('historical first WIN stops; later outcomes not counted',()=>{const r=reviewPlan([miss,hit(),hit(),miss],buildBudgetPlan(4,75000,1e9,'legacy',2));assert.equal(r.stopIndex,1);assert.equal(r.net,100000);assert.equal(r.rows[2].review,'skipped');assert.equal(r.rows[2].net,null)});
+test('repeated nhay count correctly; fixed first hit can be loss',()=>{const r=reviewPlan([miss,miss,hit()],buildBudgetPlan(3,75000,1e9,'fixed',2));assert.equal(r.net,-50000);const m=reviewPlan([hit(2)],buildBudgetPlan(1,75000,1e9,'fixed',2));assert.equal(m.net,650000)});
+test('unknown result blocks review, not counted as MISS',()=>{const r=reviewPlan([miss,{status:'missing'},hit()],buildBudgetPlan(3,75000,1e9,'legacy',2));assert.equal(r.net,-150000);assert.equal(r.settled,1);assert.equal(r.rows[2].review,'unverified')});
+test('budget cap blocks a later day',()=>{const p=buildBudgetPlan(4,75000,300000,'legacy',2);assert.equal(p.covered,2);assert.equal(p.maxOutlay,300000);assert.equal(p.rows[2].allowed,false);const r=reviewPlan([miss,miss,hit(),miss],p);assert.equal(r.reason,'budget');assert.equal(r.net,-300000)});

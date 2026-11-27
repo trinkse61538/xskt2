@@ -2,11 +2,11 @@ import {enrichResearch} from './research-v2.js';
 import {renderStationPanel,scopedDraws,stationResults} from './station-v31.js';
 import {healthPanel,statsBounds,renderAboutV2} from './health-v2.js';
 import {loadHealth,completedISO} from './data.js';
-import {loadMonthlyDays,monthlyResult,monthlySummary} from './monthly-v32.js';
+import {loadMonthlyDays,monthlyResult,monthlySummary} from './monthly-v32.js?v=3.5.0';
 import {loadRecord,loadBestDays,loadMonth,loadRange,loadYear,loadHistoryIndex,loadResearch,historyDay,fmtDate,monthLabel,firstOfMonth,shiftMonth,daysInMonth,weekdayMon0,addDays,MIN_DATE,MAX_DATE,pct,esc,money,parseISO} from './data.js';
 import {readProfile,analyzeProfile,personalRanking,picksFor,elementLabel} from './personal.js';
 import {scorePicks,theoreticalTwoPickBaseline,stationMatch,stationsForDate,stationHistory,uniqueHitRate,numberTable,anomalyFor,anomalyLabel,matchSummaryText,BASELINE_TWO_18} from './history.js';
-import {renderGuideV33} from './guide-v33.js';
+import {renderGuideV35} from './guide-v35.js?v=3.5.0';
 
 function modeSwitch(state,profile){return `<div class="mode-switch"><button data-action="mode" data-mode="universal" class="${state.mode==='universal'?'active':''}">🌤 Thiên thời</button><button data-action="mode" data-mode="personal" class="${state.mode==='personal'?'active':''}">👤 Cá nhân${profile?'':' · chưa có hồ sơ'}</button></div>`}
 function tierClass(t){return `tier-${String(t||'C').toLowerCase()}`}
@@ -73,7 +73,7 @@ export async function renderBest(ctx){
   }catch(e){if(ctx.bestRequest===request)list.innerHTML=`<div class="error-card">${esc(e.message)}</div>`}
 }
 
-export async function renderGuide(ctx){return renderGuideV33(ctx);}
+export async function renderGuide(ctx){return renderGuideV35(ctx);}
 
 export async function renderStats(ctx){
   const {state,$}=ctx,request=Symbol(),scope=state.statsScope;ctx.statsRequest=request;const h=await loadHealth(),{start,end}=statsBounds(state,h),idx=await loadHistoryIndex(start,end),dates=Object.keys(idx.dates).filter(d=>d>=start&&d<=end).sort();if(ctx.statsRequest!==request)return;$('#statsKpis').innerHTML='';
